@@ -1,0 +1,167 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply min-h-screen bg-slate-50 font-[Segoe_UI,Roboto,Helvetica,Arial,sans-serif] text-slate-900;
+  }
+}
+
+@layer components {
+  .page-shell {
+    @apply mx-auto max-w-7xl space-y-6 px-4 py-8;
+  }
+
+  .top-card {
+    @apply rounded-card border border-borderSoft bg-white p-6 shadow-card;
+  }
+
+  .top-card-row {
+    @apply flex flex-wrap items-center justify-between gap-3;
+  }
+
+  .page-title {
+    @apply text-xl font-semibold tracking-tight text-primary;
+  }
+
+  .pill-year {
+    @apply inline-flex items-center rounded-pill bg-primary px-3 py-1 text-sm font-semibold text-white;
+  }
+
+  .alert-info {
+    @apply flex items-start gap-3 rounded-md border-l-4 border-primary bg-sky-50 p-4 text-primary;
+  }
+
+  .alert-icon {
+    @apply pt-0.5 text-lg;
+  }
+
+  .alert-content {
+    @apply flex-1;
+  }
+
+  .alert-title {
+    @apply text-lg font-semibold;
+  }
+
+  .alert-message {
+    @apply mt-1 text-sm text-primary/90;
+  }
+
+  .overview-grid {
+    @apply grid grid-cols-1 gap-6;
+  }
+
+  .overview-summary-card {
+    @apply rounded-card border border-borderSoft bg-white p-6 shadow-card;
+  }
+
+  .recent-donors-card {
+    @apply rounded-card border border-borderSoft bg-white p-6 shadow-card;
+  }
+
+  .section-title {
+    @apply text-lg font-semibold text-primary;
+  }
+
+  .metrics-list {
+    @apply mt-5 space-y-4;
+  }
+
+  .metric-label {
+    @apply text-sm font-medium text-muted;
+  }
+
+  .metric-value {
+    @apply text-2xl font-semibold text-slate-900;
+  }
+
+  .btn-primary-outline {
+    @apply mt-6 inline-flex w-full items-center justify-center gap-2 rounded-card border-2 border-primary bg-transparent px-4 py-2 font-semibold text-primary transition duration-300 ease-in-out hover:bg-primary hover:text-white hover:shadow-hoverSoft;
+  }
+
+  .table-shell {
+    @apply mt-4 overflow-x-auto rounded-card border border-cardBorder;
+  }
+
+  .data-table {
+    @apply min-w-full text-sm;
+  }
+
+  .data-head {
+    @apply bg-slate-100 text-slate-700;
+  }
+
+  .data-th {
+    @apply px-4 py-3 text-left font-semibold;
+  }
+
+  .data-body {
+    @apply divide-y divide-borderSoft bg-white text-primary;
+  }
+
+  .data-td {
+    @apply px-4 py-3;
+  }
+
+  .pill-level {
+    @apply inline-flex min-w-24 justify-center rounded-pill px-3 py-1 text-xs font-semibold uppercase tracking-wide;
+  }
+
+  .pill-level-platinum {
+    @apply border border-emerald-300 bg-emerald-100 text-emerald-900;
+  }
+
+  .pill-level-gold {
+    @apply bg-amber-200 text-amber-900;
+  }
+
+  .pill-level-silver {
+    @apply bg-slate-300 text-slate-800;
+  }
+
+  .pill-level-bronze {
+    @apply bg-orange-200 text-orange-900;
+  }
+
+  .pill-level-foundational {
+    @apply bg-lime-200 text-lime-900;
+  }
+
+  .donor-groups-grid {
+    @apply grid grid-cols-1 gap-6;
+  }
+
+  .donor-group-card {
+    @apply rounded-card border border-borderSoft bg-white p-6 shadow-card;
+  }
+
+  @screen sm {
+    .page-shell {
+      @apply px-6;
+    }
+
+    .page-title {
+      @apply text-3xl;
+    }
+  }
+
+  @screen lg {
+    .page-shell {
+      @apply px-8;
+    }
+
+    .overview-grid {
+      @apply grid-cols-3;
+    }
+
+    .recent-donors-card {
+      grid-column: span 2 / span 2;
+    }
+
+    .donor-groups-grid {
+      @apply grid-cols-2;
+    }
+  }
+}

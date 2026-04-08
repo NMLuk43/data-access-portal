@@ -1,0 +1,516 @@
+#DynamicContent {
+  /* Variables */
+  --primary: #003865;
+  --muted: #4d5462;
+  --border: #e7e8ea;
+  --card-border: #e0e0e0;
+  --radius: 0.375rem;
+  --pill-radius: 0.8rem;
+  --avatar-size: 9rem;
+  --transition: 0.3s;
+  --gap: 1rem;
+
+  /* Alert Boxes */
+  /* Base alert container */
+  .alert-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: 6px;
+    border-left: 4px solid #003865;
+    background-color: #eaf4fb;
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    width: 100%;
+  }
+
+  /* Optional themes — reuse for other alert types */
+  .alert-info {
+    background-color: #eaf4fb;
+    border-color: #003865;
+    color: #003865;
+  }
+
+  .alert-warning {
+    background-color: #fff8e5;
+    border-color: #f5a800;
+    color: #4a3b00;
+  }
+
+  .alert-success {
+    background-color: #e8f8ef;
+    border-color: #007c41;
+    color: #003320;
+  }
+
+  .alert-error {
+    background-color: #fdeaea;
+    border-color: #c62828;
+    color: #611111;
+  }
+
+  /* Content styles */
+  .alert-content {
+    flex: 1;
+  }
+
+  .alert-title {
+    font-weight: 600;
+    font-size: 1.125rem; /* roughly text-lg */
+    margin: 0;
+    color: inherit;
+  }
+
+  .alert-title i {
+    font-size: 1.25rem;
+    margin-right: 0.25rem;
+    vertical-align: middle;
+  }
+
+  .alert-message {
+    font-size: 0.875rem; /* roughly text-sm */
+    margin-top: 0.25rem;
+    color: rgba(10, 74, 106, 0.9);
+  }
+
+  /* Buttons */
+  .add-new-button {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    background: transparent;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color var(--transition) ease,
+      color var(--transition) ease, box-shadow var(--transition) ease;
+    margin-top: auto;
+  }
+
+  .add-new-button:hover {
+    background-color: var(--primary);
+    color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  .class-year {
+    background-color: var(--primary);
+    color: #fff;
+    padding: 0.125rem 0.5rem;
+    border-radius: var(--pill-radius);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .edit-info-button {
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    border-radius: var(--radius);
+    transition: box-shadow var(--transition) ease;
+  }
+
+  button.edit-info-button:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  div.edit-info-button {
+    cursor: default;
+  }
+
+  .fixme {
+    color: #ff0000;
+    font-weight: bold;
+    display: none;
+  }
+
+  /* Cards */
+  .info-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--gap);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    min-width: 0;
+  }
+
+  .info-card_content-card {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 0.5rem 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .info-card_content-card_info {
+    display: flex;
+    flex-direction: column;
+    color: var(--primary);
+    margin-right: auto;
+    min-width: 0;
+  }
+
+  .info-card_content-card_info span {
+    display: flex;
+    align-items: center;
+  }
+
+  .info-card_content-card_info_title {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .info-card_content-card_info_value {
+    display: flex;
+    flex-wrap: wrap;
+    word-break: break-word;
+    min-width: 0;
+  }
+
+  .info-card_content-card_info_value strong {
+    margin-right: 0.25rem;
+  }
+
+  .info-card__content_icon {
+    font-size: 1.5rem;
+    color: var(--primary);
+    margin-right: 0.75rem;
+  }
+
+  .info-card_content-privacy {
+    font-size: 0.875rem;
+    color: var(--primary);
+    font-weight: 400;
+  }
+
+  .info-card_content-privacy-wrapper {
+    display: flex;
+    align-items: center; /* vertically align text and icon */
+    gap: 0.5rem; /* optional spacing between text and icon */
+    margin-right: .875rem;
+  }
+
+  .info-card_content_privacy-icon {
+    width: 1.5rem; /* fixed width ensures consistent alignment across cards */
+    text-align: center; /* centers narrower icons within that width */
+    font-size: 1.025rem;
+    color: var(--primary);
+  }
+
+  .info-card_icon {
+    font-size: 2.5rem;
+    color: var(--primary);
+    display: none;
+  }
+
+  .info-card_title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 1.5rem;
+  }
+
+  .info-card_title__social {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 1.25rem;
+  }
+
+  /* Profile primary card */
+  .profile-info-primary-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+  }
+
+  .profile-info-primary-card_details {
+    display: block;
+    margin: 0 3rem 0 0;
+    width: 50%;
+  }
+
+  .profile-info-primary-card_photo-name-year {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-sizing: border-box;
+    padding-right: 1rem;
+    margin: 0 auto 0 0;
+  }
+
+  .profile-info-primary-card_photo-name-year_photo-wrapper {
+    width: var(--avatar-size);
+    height: var(--avatar-size);
+    flex: 0 0 auto;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .profile-info-primary-card_photo-name-year_photo-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 9999px;
+  }
+
+  .profile-info-primary-card_photo-name-year_photo-wrapper button {
+    position: absolute;
+    bottom: 0;
+    right: 0.5rem;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    border: none;
+    background: none;
+    line-height: 0;
+    display: inline-block;
+    border-radius: 50%;
+    transition: box-shadow var(--transition) ease;
+  }
+
+  .profile-info-primary-card_photo-name-year_photo-wrapper button:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  .profile-info-primary-card_photo-name-year_photo-wrapper .edit-pencil {
+    width: 2.25rem;
+  }
+
+  .profile-info-primary-card_personal-info {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+    font-size: 1rem;
+    margin: 0 auto 0 0;
+  }
+
+  .profile-info-primary-card_personal-info span {
+    display: flex;
+    align-items: center;
+  }
+
+  .profile-info-primary-card_personal-info__icon {
+    margin-inline: 1rem;
+  }
+
+  .profile-info-primary-card_personal-info_icon {
+    width: 1.5rem;
+    text-align: center;
+    font-size: 1.25rem;
+    color: var(--muted);
+  }
+
+  .profile-info-primary-card_personal-info_label {
+    font-weight: 800;
+    color: var(--muted);
+    margin-bottom: 0;
+    margin-inline: 0.5rem;
+  }
+
+  .profile-info-primary-card_personal-info_item {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .profile-info-primary-card_personal-info_item__content {
+    word-wrap: break-word;
+    white-space: normal;
+  }
+
+  .profile-info-primary-card__profile-privacy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /* Cards container layout */
+  .profile-info-cards-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+
+  .profile-info-cards-container .info-card {
+    flex: 1 1 calc(50% - 1.5rem);
+    box-sizing: border-box;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 1200px) {
+    .profile-info-cards-container .info-card {
+      flex: 1 1 calc(50% - 1.5rem);
+    }
+
+    .profile-info-primary-card_photo-name-year {
+      flex-direction: column;
+    }
+
+    .profile-info-primary-card_photo-name-year_photo-wrapper, .profile-info-primary-card_photo-name-year_name-major-year {
+      margin-right: auto;
+    }
+  }
+
+  @media (max-width: 1150px) {
+    .class-year {
+      display: block;
+      margin: 0.25rem auto;
+    }
+
+    h3 {
+      font-size: 1.5rem;
+    }
+
+    .info-card.com-settings {
+      max-width: 100%;
+    }
+
+    .info-card_title {
+      font-size: 1.25rem;
+    }
+
+    .major {
+      font-size: 1.125rem;
+    }
+
+    .profile-info-primary-card {
+      flex-direction: column;
+    }
+
+    .profile-info-primary-card_details {
+      gap: 1rem;
+      width: auto;
+      margin-inline: auto;
+    }
+
+    .profile-info-primary-card_photo-name-year,
+    .profile-info-primary-card_personal-info {
+      flex-direction: column;
+      margin-inline: auto;
+      padding-inline: 0;
+      flex-wrap: wrap;
+      text-align: center;
+      justify-content: center;
+      width: auto;
+    }
+
+    .profile-info-primary-card_photo-name-year_photo-wrapper, .profile-info-primary-card_photo-name-year_name-major-year {
+      margin-inline: auto;
+    }
+
+    .profile-info-cards-container .info-card {
+      flex: 1 1 100%;
+    }
+
+    .info-card_content-card_info {
+      flex: 1 1 0%;
+      min-width: 0;
+    }
+
+    .info-card_content-card_info_value {
+      display: inline-block;
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+      -webkit-mask-image: linear-gradient(
+        to right,
+        black 60%,
+        transparent 100%
+      );
+      mask-image: linear-gradient(to right, black 60%, transparent 100%);
+      white-space: nowrap;
+    }
+
+    .profile-info-primary-card_personal-info span,
+    .profile-info-primary-card__profile-privacy {
+      flex-wrap: wrap;
+      text-align: center;
+      justify-content: center;
+    }
+
+    .profile-info-primary-card_personal-info_item {
+      margin-bottom: 0.5rem;
+    }
+
+    .profile-info-primary-card_personal-info_label {
+      padding-right: 0;
+    }
+
+    .profile-info-primary-card_personal-info_item span {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .profile-info-primary-card_personal-info {
+      flex: 0 0 100%;
+      margin-inline: auto;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .profile-info-primary-card_photo-name-year {
+      flex: 0 0 100%;
+      margin-inline: auto;
+      justify-content: center;
+    }
+  }
+
+  /* Dropdown behavior */
+  .dropdown-card {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dropdown-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: none;
+    border: none;
+    color: var(--primary);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+  }
+
+  .dropdown-icon {
+    transition: transform var(--transition) ease;
+  }
+
+  .dropdown-toggle[aria-expanded="true"] .dropdown-icon {
+    transform: rotate(90deg);
+  }
+
+  .dropdown-content {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height var(--transition) ease,
+      opacity var(--transition) ease;
+  }
+
+  .dropdown-content.show {
+    max-height: 200px;
+    opacity: 1;
+  }
+}
