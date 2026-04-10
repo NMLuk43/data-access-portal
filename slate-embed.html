@@ -9,24 +9,25 @@
       body {
         margin: 0;
         padding: 0;
-        background: #f5f7fb;
+        background: transparent;
         font-family: Georgia, "Times New Roman", serif;
       }
 
       .embed-shell {
         width: 100%;
-        max-width: 1600px;
-        margin: 0 auto;
-        padding: 16px;
+        max-width: none;
+        margin: 0;
+        padding: 0;
         box-sizing: border-box;
       }
 
       .embed-frame {
         display: block;
         width: 100%;
-        min-height: 1600px;
+        min-height: 100vh;
         border: 0;
-        background: #ffffff;
+        background: transparent;
+        overflow: hidden;
       }
     </style>
   </head>
@@ -82,6 +83,10 @@
         if (event.data && event.data.type === "donor-data-ready") {
           iframeReady = true;
           postPayloadIfReady();
+        }
+
+        if (event.data && event.data.type === "dashboard-height" && Number.isFinite(event.data.height)) {
+          dashboardFrame.style.height = `${Math.max(1200, Math.ceil(event.data.height))}px`;
         }
       });
 

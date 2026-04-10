@@ -90,6 +90,32 @@ function isEmbeddedDataMode() {
   return pageUrl.searchParams.get("embedded") === "1";
 }
 
+function getEmbeddedSourceOrigin() {
+  const pageUrl = new URL(window.location.href);
+  return pageUrl.searchParams.get("sourceOrigin") || "";
+}
+
+function postEmbedHeight() {
+  if (!isEmbeddedDataMode() || !window.parent || window.parent === window) {
+    return;
+  }
+
+  const targetOrigin = getEmbeddedSourceOrigin() || "*";
+  const height = Math.max(
+    document.documentElement ? document.documentElement.scrollHeight : 0,
+    document.body ? document.body.scrollHeight : 0,
+    dashboardRoot ? dashboardRoot.scrollHeight : 0
+  );
+
+  window.parent.postMessage(
+    {
+      type: "dashboard-height",
+      height
+    },
+    targetOrigin
+  );
+}
+
 function getFetchUrl() {
   const pageUrl = new URL(window.location.href);
   const configuredDataUrl = pageUrl.searchParams.get("dataUrl");
@@ -1371,6 +1397,7 @@ function renderLoadedDashboard() {
   renderAlerts();
   renderDashboard();
   dashboardRoot.classList.remove("dashboard-loading");
+  postEmbedHeight();
 }
 
 async function loadDonors() {
@@ -1403,8 +1430,7 @@ async function loadDonors() {
 
 function waitForEmbeddedPayload() {
   return new Promise((resolve, reject) => {
-    const pageUrl = new URL(window.location.href);
-    const allowedOrigin = pageUrl.searchParams.get("sourceOrigin") || "";
+    const allowedOrigin = getEmbeddedSourceOrigin();
     const timeoutId = window.setTimeout(() => {
       window.removeEventListener("message", handleMessage);
       reject(new Error("Timed out waiting for donor data from the parent page."));
@@ -1432,8 +1458,25 @@ function waitForEmbeddedPayload() {
   });
 }
 
+function bindEmbeddedResizeEvents() {
+  if (!isEmbeddedDataMode()) {
+    return;
+  }
+
+  window.addEventListener("load", postEmbedHeight);
+  window.addEventListener("resize", postEmbedHeight);
+
+  if (typeof ResizeObserver === "function" && dashboardRoot) {
+    const resizeObserver = new ResizeObserver(() => {
+      postEmbedHeight();
+    });
+    resizeObserver.observe(dashboardRoot);
+  }
+}
+
 async function init() {
   bindFilters();
+  bindEmbeddedResizeEvents();
   renderLoadingState();
   renderLevelGuide();
 
