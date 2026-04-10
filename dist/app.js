@@ -83,8 +83,16 @@ const levelGuideList = document.querySelector("#level-guide-list");
 let donors = [];
 const donorByGuid = new Map();
 let selectedOverviewPeriod = "";
+let lastLoadErrorMessage = "";
 
 function getFetchUrl() {
+  const pageUrl = new URL(window.location.href);
+  const configuredDataUrl = pageUrl.searchParams.get("dataUrl");
+
+  if (configuredDataUrl) {
+    return new URL(configuredDataUrl, pageUrl.href).toString();
+  }
+
   const url = new URL(window.location.href);
   url.search = "";
   url.searchParams.set("cmd", "fetch-donors");
@@ -1317,17 +1325,18 @@ function renderLoadingState() {
 
 function renderErrorState() {
   dashboardRoot.classList.remove("dashboard-loading");
+  const errorMessage = lastLoadErrorMessage || "The donor feed could not be loaded.";
   designationSummary.textContent = "Unable to load designation activity.";
   designationList.innerHTML = `
     <article class="designation-item designation-item-empty">
       <p class="designation-item-name">Designation data unavailable</p>
-      <p class="designation-item-meta">The monthly designation summary could not be loaded.</p>
+      <p class="designation-item-meta">${escapeHtml(errorMessage)}</p>
     </article>
   `;
 
   donorResults.innerHTML = `
     <tr>
-      <td class="data-td" colspan="7">Unable to load donors right now.</td>
+      <td class="data-td" colspan="7">${escapeHtml(errorMessage)}</td>
     </tr>
   `;
 
@@ -1337,7 +1346,7 @@ function renderErrorState() {
         <span class="alert-item-title">Data unavailable</span>
         <span class="alert-badge alert-badge-lapsed">Error</span>
       </div>
-      <p class="alert-item-reason">The donor feed could not be loaded.</p>
+      <p class="alert-item-reason">${escapeHtml(errorMessage)}</p>
     </article>
   `;
 }
@@ -1345,13 +1354,25 @@ function renderErrorState() {
 async function loadDonors() {
   renderLoadingState();
   donorByGuid.clear();
+  lastLoadErrorMessage = "";
+  const fetchUrl = getFetchUrl();
+  const fetchOrigin = new URL(fetchUrl, window.location.href).origin;
+  const currentOrigin = window.location.origin;
+  const credentialsMode = fetchOrigin === currentOrigin ? "same-origin" : "include";
 
-  const response = await fetch(getFetchUrl(), {
-    credentials: "same-origin"
+  const response = await fetch(fetchUrl, {
+    credentials: credentialsMode
   });
 
   if (!response.ok) {
     throw new Error(`Request failed with status ${response.status}`);
+  }
+
+  const contentType = response.headers.get("content-type") || "";
+
+  if (!contentType.toLowerCase().includes("application/json")) {
+    const bodyPreview = (await response.text()).slice(0, 80).trim();
+    throw new Error(`Data URL returned HTML or non-JSON content: ${fetchUrl} (${bodyPreview || "empty response"})`);
   }
 
   const payload = await response.json();
@@ -1375,6 +1396,7 @@ async function init() {
     renderDashboard();
     dashboardRoot.classList.remove("dashboard-loading");
   } catch (error) {
+    lastLoadErrorMessage = error instanceof Error ? error.message : String(error);
     console.error(error);
     renderErrorState();
   }
