@@ -1407,7 +1407,7 @@ function waitForEmbeddedPayload() {
     const timeoutId = window.setTimeout(() => {
       window.removeEventListener("message", handleMessage);
       reject(new Error("Timed out waiting for donor data from the parent page."));
-    }, 15000);
+    }, 90000);
 
     function handleMessage(event) {
       if (allowedOrigin && event.origin !== allowedOrigin) {
