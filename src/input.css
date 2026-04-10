@@ -70,6 +70,63 @@
     @apply flex h-full flex-col rounded-card border border-borderSoft bg-white p-6 shadow-card;
   }
 
+  .auth-page-shell {
+    @apply min-h-screen py-10;
+  }
+
+  .auth-page-header {
+    @apply max-w-4xl;
+  }
+
+  .auth-page-title {
+    @apply mt-2;
+  }
+
+  .auth-page-subtitle {
+    @apply max-w-2xl;
+  }
+
+  .auth-page-grid {
+    @apply grid grid-cols-1 gap-6;
+  }
+
+  .auth-page-hero {
+    @apply p-0;
+  }
+
+  .auth-page-hero-stat {
+    @apply min-h-full;
+  }
+
+  .auth-page-hero-value {
+    @apply text-3xl;
+  }
+
+  .auth-page-side {
+    @apply justify-start;
+  }
+
+  .auth-page-actions {
+    @apply mt-5 flex flex-wrap gap-3;
+  }
+
+  .auth-page-button {
+    appearance: none;
+    @apply inline-flex min-h-12 items-center justify-center rounded-card px-4 py-3 text-sm font-semibold no-underline transition;
+  }
+
+  .auth-page-button-primary {
+    @apply bg-primary text-white hover:bg-slate-900;
+  }
+
+  .auth-page-button-secondary {
+    @apply border border-borderSoft bg-white text-primary hover:bg-slate-50;
+  }
+
+  .auth-page-footnote {
+    @apply mt-4 text-sm text-muted;
+  }
+
   .section-title {
     @apply text-lg font-semibold text-primary;
   }
@@ -911,6 +968,10 @@
 
     .sticky-summary-bar {
       @apply grid-cols-4;
+    }
+
+    .auth-page-grid {
+      grid-template-columns: minmax(0, 7fr) minmax(18rem, 3fr);
     }
 
     .filters-grid {
