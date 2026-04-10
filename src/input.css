@@ -13,76 +13,440 @@
     @apply mx-auto max-w-7xl space-y-6 px-4 py-8;
   }
 
-  .top-card {
+  .dashboard-loading {
+    @apply cursor-progress;
+  }
+
+  .surface-card {
     @apply rounded-card border border-borderSoft bg-white p-6 shadow-card;
   }
 
-  .top-card-row {
-    @apply flex flex-wrap items-center justify-between gap-3;
+  .page-header {
+    @apply rounded-card border border-borderSoft bg-white p-6 shadow-card;
   }
 
   .page-title {
-    @apply text-xl font-semibold tracking-tight text-primary;
+    @apply text-2xl font-semibold tracking-tight text-primary;
   }
 
-  .pill-year {
-    @apply inline-flex items-center rounded-pill bg-primary px-3 py-1 text-sm font-semibold text-white;
+  .page-subtitle {
+    @apply mt-2 max-w-3xl text-sm leading-6 text-muted;
   }
 
-  .alert-info {
-    @apply flex items-start gap-3 rounded-md border-l-4 border-primary bg-sky-50 p-4 text-primary;
+  .loading-notice {
+    @apply mt-3 hidden items-center gap-3 rounded-card bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900;
   }
 
-  .alert-icon {
-    @apply pt-0.5 text-lg;
+  .loading-spinner {
+    @apply inline-block h-4 w-4 rounded-full border-2 border-amber-300 border-t-amber-700;
+    animation: spin 0.8s linear infinite;
   }
 
-  .alert-content {
-    @apply flex-1;
-  }
-
-  .alert-title {
-    @apply text-lg font-semibold;
-  }
-
-  .alert-message {
-    @apply mt-1 text-sm text-primary/90;
-  }
-
-  .overview-grid {
+  .top-dashboard-row {
     @apply grid grid-cols-1 gap-6;
   }
 
-  .overview-summary-card {
+  .month-overview-card {
     @apply rounded-card border border-borderSoft bg-white p-6 shadow-card;
   }
 
-  .recent-donors-card {
-    @apply rounded-card border border-borderSoft bg-white p-6 shadow-card;
+  .alerts-card {
+    @apply flex h-full flex-col rounded-card border border-borderSoft bg-white p-6 shadow-card;
   }
 
   .section-title {
     @apply text-lg font-semibold text-primary;
   }
 
-  .metrics-list {
-    @apply mt-5 space-y-4;
+  .section-subtitle {
+    @apply mt-1 text-sm text-muted;
   }
 
-  .metric-label {
+  .overview-header {
+    @apply flex flex-col gap-3;
+  }
+
+  .month-selector-wrap {
+    @apply flex max-w-56 flex-col gap-2;
+  }
+
+  .month-selector-label {
+    @apply text-xs font-semibold uppercase tracking-wide text-muted;
+  }
+
+  .month-selector {
+    @apply w-full rounded-card border border-borderSoft bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-primary;
+  }
+
+  .overview-hero {
+    @apply mt-5 grid grid-cols-1 gap-4;
+  }
+
+  .hero-stat {
+    @apply rounded-card bg-primary px-5 py-5 text-white;
+  }
+
+  .hero-stat-label {
+    @apply text-sm font-medium text-slate-200;
+  }
+
+  .hero-stat-value {
+    @apply mt-2 text-4xl font-semibold tracking-tight;
+  }
+
+  .hero-stat-detail {
+    @apply mt-2 text-sm text-slate-200;
+  }
+
+  .loading-block {
+    border-radius: 0.375rem;
+  }
+
+  .loading-block-hero {
+    @apply max-w-52;
+  }
+
+  .loading-block-detail {
+    @apply max-w-72;
+  }
+
+  .loading-block-stat {
+    @apply max-w-28;
+  }
+
+  .loading-block-note {
+    @apply max-w-36;
+  }
+
+  .loading-block-center {
+    @apply inline-block min-h-4 min-w-11;
+  }
+
+  .loading-block-legend {
+    @apply inline-block min-h-4 min-w-16;
+  }
+
+  .stats-grid {
+    @apply grid grid-cols-1 gap-4;
+  }
+
+  .stat-card {
+    @apply rounded-card border border-cardBorder bg-slate-50 p-4;
+  }
+
+  .stat-card-label {
     @apply text-sm font-medium text-muted;
   }
 
-  .metric-value {
-    @apply text-2xl font-semibold text-slate-900;
+  .stat-card-value {
+    @apply mt-2 text-2xl font-semibold text-slate-900;
   }
 
-  .btn-primary-outline {
-    @apply mt-6 inline-flex w-full items-center justify-center gap-2 rounded-card border-2 border-primary bg-transparent px-4 py-2 font-semibold text-primary transition duration-300 ease-in-out hover:bg-primary hover:text-white hover:shadow-hoverSoft;
+  .stat-card-note {
+    @apply mt-1 text-xs uppercase tracking-wide text-primary;
+  }
+
+  .chart-grid {
+    @apply mt-6 grid grid-cols-1 gap-4;
+  }
+
+  .designation-section {
+    @apply mt-6 rounded-card border border-cardBorder bg-slate-50 p-4;
+  }
+
+  .designation-header {
+    @apply flex flex-col gap-3;
+  }
+
+  .designation-summary {
+    @apply mt-1 text-sm text-muted;
+  }
+
+  .designation-list {
+    @apply mt-4 space-y-3;
+  }
+
+  .designation-item {
+    @apply flex items-start justify-between gap-4 rounded-card border border-cardBorder bg-white px-4 py-4;
+  }
+
+  .designation-item-empty {
+    @apply block;
+  }
+
+  .designation-item-copy {
+    @apply min-w-0;
+  }
+
+  .designation-item-rank {
+    @apply text-xs font-semibold uppercase tracking-wide text-primary;
+  }
+
+  .designation-item-name {
+    @apply mt-1 text-sm font-semibold text-slate-900;
+  }
+
+  .designation-item-meta {
+    @apply mt-1 text-sm text-muted;
+  }
+
+  .designation-item-value {
+    @apply shrink-0 text-base font-semibold text-slate-900;
+  }
+
+  .chart-card {
+    @apply rounded-card border border-cardBorder bg-white p-4;
+  }
+
+  .chart-title {
+    @apply text-sm font-semibold uppercase tracking-wide text-muted;
+  }
+
+  .donut-wrap {
+    @apply mt-4 flex items-center gap-4;
+  }
+
+  .donut-chart {
+    width: 7rem;
+    height: 7rem;
+    border-radius: 9999px;
+    background: conic-gradient(#003865 0 62%, #cbd5e1 62% 100%);
+    @apply relative shrink-0;
+  }
+
+  .donut-hole {
+    @apply absolute inset-4 rounded-full bg-white;
+  }
+
+  .donut-center {
+    @apply absolute inset-0 flex items-center justify-center text-sm font-semibold text-primary;
+  }
+
+  .legend-list {
+    @apply space-y-2;
+  }
+
+  .legend-item {
+    @apply flex items-center justify-between gap-4 text-sm;
+  }
+
+  .legend-label {
+    @apply flex items-center gap-2 text-muted;
+  }
+
+  .legend-swatch-recurring {
+    @apply h-3 w-3 rounded-full bg-primary;
+  }
+
+  .legend-swatch-onetime {
+    @apply h-3 w-3 rounded-full bg-slate-300;
+  }
+
+  .legend-value {
+    @apply font-semibold text-slate-900;
+  }
+
+  .trend-chart {
+    @apply mt-4 flex h-40 items-end gap-3;
+  }
+
+  .trend-bar-group {
+    @apply flex flex-1 flex-col items-center gap-2;
+  }
+
+  .trend-bar-track {
+    @apply flex h-32 w-full items-end rounded-pill bg-slate-100 px-2 py-2;
+  }
+
+  .trend-bar {
+    @apply w-full rounded-pill bg-primary;
+  }
+
+  .trend-bar-week1 {
+    height: 32%;
+  }
+
+  .trend-bar-week2 {
+    height: 48%;
+  }
+
+  .trend-bar-week3 {
+    height: 66%;
+  }
+
+  .trend-bar-week4 {
+    height: 84%;
+  }
+
+  .trend-label {
+    @apply text-xs font-medium uppercase tracking-wide text-muted;
+  }
+
+  .alerts-feed {
+    @apply mt-5 flex-1 space-y-3 overflow-hidden;
+  }
+
+  .alert-item {
+    @apply rounded-card border border-cardBorder bg-slate-50 p-4;
+  }
+
+  .alert-item-row {
+    @apply flex items-start justify-between gap-3;
+  }
+
+  .alert-item-title {
+    @apply text-sm font-semibold text-slate-900;
+  }
+
+  .donor-inline-flags {
+    @apply mt-2 flex flex-wrap gap-2;
+  }
+
+  .alert-item-reason {
+    @apply mt-1 text-sm text-muted;
+  }
+
+  .alerts-more {
+    @apply px-1 text-sm font-semibold text-primary;
+  }
+
+  .alert-item-button {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    line-height: inherit;
+    text-transform: none;
+    letter-spacing: inherit;
+    @apply w-full text-left;
+  }
+
+  .alert-badge {
+    @apply inline-flex shrink-0 items-center rounded-pill px-3 py-1 text-xs font-semibold uppercase tracking-wide;
+  }
+
+  .alert-badge-thanks {
+    @apply bg-amber-100 text-amber-900;
+  }
+
+  .alert-badge-lapsed {
+    @apply bg-rose-100 text-rose-900;
+  }
+
+  .alert-badge-at-risk {
+    @apply bg-rose-100 text-rose-900;
+  }
+
+  .alert-badge-restriction {
+    @apply bg-violet-100 text-violet-900;
+  }
+
+  .skeleton-row {
+    @apply rounded-card border border-cardBorder bg-slate-50 p-4;
+  }
+
+  .skeleton-line {
+    @apply block rounded-card;
+    height: 0.875rem;
+  }
+
+  .skeleton-line-title {
+    @apply w-7/12;
+  }
+
+  .skeleton-line-text {
+    @apply mt-2 w-5/12;
+  }
+
+  .skeleton-line-badge {
+    @apply h-7 w-20 rounded-pill;
+  }
+
+  .skeleton-row-top {
+    @apply flex items-start justify-between gap-3;
+  }
+
+  .skeleton-table-line {
+    @apply block rounded-card;
+    height: 0.875rem;
+  }
+
+  .skeleton-table-line-name {
+    @apply w-28;
+  }
+
+  .skeleton-table-line-subtext {
+    @apply mt-2 w-40;
+  }
+
+  .skeleton-table-line-cell {
+    @apply w-20;
+  }
+
+  .search-card {
+    @apply rounded-card border border-borderSoft bg-white p-6 shadow-card;
+  }
+
+  .search-header {
+    @apply flex flex-wrap items-center justify-between gap-3;
+  }
+
+  .level-guide-button {
+    appearance: none;
+    background: transparent;
+    margin: 0;
+    font: inherit;
+    line-height: inherit;
+    text-transform: none;
+    letter-spacing: inherit;
+    @apply rounded-card border border-borderSoft px-3 py-2 text-sm font-semibold text-primary transition hover:bg-slate-50;
+  }
+
+  .search-shell {
+    @apply mt-5 rounded-card border border-cardBorder bg-slate-50 p-3;
+  }
+
+  .search-input {
+    @apply w-full rounded-card border border-borderSoft bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-primary;
+  }
+
+  .filters-panel {
+    @apply mt-4 rounded-card border border-cardBorder bg-white p-4;
+  }
+
+  .filters-panel-title {
+    @apply text-sm font-semibold uppercase tracking-wide text-muted;
+  }
+
+  .filters-grid {
+    @apply mt-4 grid grid-cols-1 gap-4;
+  }
+
+  .filter-field {
+    @apply space-y-2;
+  }
+
+  .filter-label {
+    @apply text-sm font-medium text-muted;
+  }
+
+  .filter-control {
+    @apply w-full rounded-card border border-borderSoft bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-primary;
+  }
+
+  .filter-chip-row {
+    @apply mt-4 flex flex-wrap gap-2;
+  }
+
+  .filter-chip {
+    @apply inline-flex items-center rounded-pill bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary;
   }
 
   .table-shell {
-    @apply mt-4 overflow-x-auto rounded-card border border-cardBorder;
+    @apply mt-5 overflow-x-auto rounded-card border border-cardBorder;
   }
 
   .data-table {
@@ -102,19 +466,55 @@
   }
 
   .data-td {
-    @apply px-4 py-3;
+    @apply px-4 py-3 align-top;
+  }
+
+  .donor-row {
+    @apply cursor-pointer transition hover:bg-slate-50;
+  }
+
+  .donor-row-disabled {
+    @apply cursor-default hover:bg-white;
+  }
+
+  .donor-name {
+    @apply font-semibold text-slate-900;
+  }
+
+  .donor-subtext {
+    @apply mt-1 text-xs text-muted;
+  }
+
+  .donor-status-badge {
+    @apply inline-flex min-w-24 justify-center rounded-pill px-3 py-1 text-xs font-semibold uppercase tracking-wide;
+  }
+
+  .donor-status-badge-active {
+    @apply bg-emerald-100 text-emerald-900;
+  }
+
+  .donor-status-badge-at-risk {
+    @apply bg-amber-100 text-amber-900;
+  }
+
+  .donor-status-badge-lapsed {
+    @apply bg-rose-100 text-rose-900;
+  }
+
+  .donor-status-badge-unknown {
+    @apply bg-slate-200 text-slate-700;
   }
 
   .pill-level {
     @apply inline-flex min-w-24 justify-center rounded-pill px-3 py-1 text-xs font-semibold uppercase tracking-wide;
   }
 
-  .pill-level-platinum {
-    @apply border border-emerald-300 bg-emerald-100 text-emerald-900;
+  .pill-level-gold {
+    @apply border border-amber-300 bg-amber-100 text-amber-900;
   }
 
-  .pill-level-gold {
-    @apply bg-amber-200 text-amber-900;
+  .pill-level-platinum {
+    @apply bg-emerald-200 text-emerald-900;
   }
 
   .pill-level-silver {
@@ -129,12 +529,202 @@
     @apply bg-lime-200 text-lime-900;
   }
 
-  .donor-groups-grid {
-    @apply grid grid-cols-1 gap-6;
+  .donor-modal {
+    @apply pointer-events-none fixed inset-0 z-50 opacity-0 transition;
   }
 
-  .donor-group-card {
-    @apply rounded-card border border-borderSoft bg-white p-6 shadow-card;
+  .donor-modal.is-open {
+    @apply pointer-events-auto opacity-100;
+  }
+
+  .donor-modal-backdrop {
+    @apply absolute inset-0 bg-slate-900/50;
+  }
+
+  .donor-modal-panel {
+    @apply absolute left-1/2 w-[calc(100%-2rem)] max-w-4xl -translate-x-1/2 overflow-y-auto rounded-card bg-white p-6 shadow-card;
+    top: max(6rem, 8vh);
+    max-height: calc(100vh - max(7rem, 8vh) - 2rem);
+  }
+
+  .donor-modal-panel-sm {
+    @apply max-w-2xl;
+  }
+
+  .donor-modal-header {
+    @apply flex items-start justify-between gap-4;
+  }
+
+  .donor-modal-eyebrow {
+    @apply text-xs font-semibold uppercase tracking-wide text-muted;
+  }
+
+  .donor-modal-title {
+    @apply mt-1 text-2xl font-semibold tracking-tight text-primary;
+  }
+
+  .donor-modal-badges {
+    @apply mt-3 flex flex-wrap gap-2;
+  }
+
+  .donor-modal-close {
+    appearance: none;
+    background: transparent;
+    margin: 0;
+    font: inherit;
+    line-height: inherit;
+    text-transform: none;
+    letter-spacing: inherit;
+    @apply rounded-card border border-borderSoft px-3 py-2 text-sm font-semibold text-primary transition hover:bg-slate-50;
+  }
+
+  .donor-modal-grid {
+    @apply mt-6 grid grid-cols-1 gap-4;
+  }
+
+  .donor-modal-card {
+    @apply rounded-card border border-cardBorder bg-slate-50 p-4;
+  }
+
+  .donor-modal-alert-card {
+    @apply sm:col-span-2;
+  }
+
+  .donor-modal-alert-list {
+    @apply mt-3 space-y-3;
+  }
+
+  .donor-modal-inline-alert {
+    @apply bg-white;
+  }
+
+  .donor-modal-restrictions {
+    @apply mt-3 space-y-2;
+  }
+
+  .donor-modal-restriction-item {
+    @apply rounded-card border border-cardBorder bg-white px-4 py-3 text-sm text-slate-900;
+  }
+
+  .donor-modal-label {
+    @apply text-sm font-medium text-muted;
+  }
+
+  .donor-modal-value {
+    @apply mt-2 text-lg font-semibold text-slate-900;
+  }
+
+  .donor-modal-value-address {
+    @apply text-base leading-6;
+  }
+
+  .donor-modal-meta {
+    @apply mt-2 text-sm text-muted;
+  }
+
+  .donor-modal-history {
+    @apply mt-6;
+  }
+
+  .donor-modal-history-header {
+    @apply flex items-center justify-between gap-4;
+  }
+
+  .donor-modal-history-title {
+    @apply text-lg font-semibold text-primary;
+  }
+
+  .donor-modal-history-count {
+    @apply text-sm font-medium text-muted;
+  }
+
+  .level-guide-list {
+    @apply mt-6 space-y-3;
+  }
+
+  .designation-modal-subtitle {
+    @apply mt-2;
+  }
+
+  .designation-modal-list {
+    @apply mt-6 space-y-3;
+  }
+
+  .designation-modal-item {
+    @apply flex items-start justify-between gap-4 rounded-card border border-cardBorder bg-slate-50 px-4 py-4;
+  }
+
+  .level-guide-item {
+    @apply flex items-center justify-between gap-4 rounded-card border border-cardBorder bg-slate-50 px-4 py-4;
+  }
+
+  .level-guide-item-copy {
+    @apply text-sm text-slate-900;
+  }
+
+  .level-guide-item-label {
+    @apply font-semibold;
+  }
+
+  .level-guide-item-range {
+    @apply mt-1 text-sm text-muted;
+  }
+
+  .dashboard-loading .loading-block,
+  .dashboard-loading .search-input,
+  .dashboard-loading .filter-control,
+  .dashboard-loading .month-selector,
+  .dashboard-loading .filter-chip,
+  .dashboard-loading .skeleton-line,
+  .dashboard-loading .skeleton-table-line {
+    color: transparent;
+    background-image: linear-gradient(90deg, #e2e8f0 0%, #f8fafc 50%, #e2e8f0 100%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.3s linear infinite;
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  .dashboard-loading .search-input::placeholder {
+    color: transparent;
+  }
+
+  .dashboard-loading .donut-chart {
+    background: #e2e8f0;
+  }
+
+  .dashboard-loading .trend-bar {
+    background: #cbd5e1;
+  }
+
+  .dashboard-loading .search-input,
+  .dashboard-loading .filter-control,
+  .dashboard-loading .month-selector {
+    pointer-events: none;
+  }
+
+  .dashboard-loading .loading-notice {
+    @apply block;
+  }
+
+  @keyframes skeleton-shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+
+    100% {
+      transform: rotate(360deg);
+    }
   }
 
   @screen sm {
@@ -145,6 +735,30 @@
     .page-title {
       @apply text-3xl;
     }
+
+    .overview-hero {
+      @apply grid-cols-2;
+    }
+
+    .overview-header {
+      @apply flex-row items-end justify-between;
+    }
+
+    .designation-header {
+      @apply flex-row items-start justify-between;
+    }
+
+    .stats-grid {
+      @apply grid-cols-2;
+    }
+
+    .filters-grid {
+      @apply grid-cols-2;
+    }
+
+    .donor-modal-grid {
+      @apply grid-cols-2;
+    }
   }
 
   @screen lg {
@@ -152,16 +766,16 @@
       @apply px-8;
     }
 
-    .overview-grid {
-      @apply grid-cols-3;
+    .top-dashboard-row {
+      grid-template-columns: minmax(0, 7fr) minmax(18rem, 3fr);
     }
 
-    .recent-donors-card {
-      grid-column: span 2 / span 2;
-    }
-
-    .donor-groups-grid {
+    .chart-grid {
       @apply grid-cols-2;
+    }
+
+    .filters-grid {
+      grid-template-columns: 1.5fr 1fr 1fr 1fr;
     }
   }
 }

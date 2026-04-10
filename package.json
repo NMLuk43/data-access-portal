@@ -1,11 +1,14 @@
 {
   "name": "data-access-portal",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "index.js",
   "scripts": {
     "build:css": "tailwindcss -i ./src/input.css -o ./dist/output.css --minify",
+    "build:js": "node ./scripts/build-js.mjs",
+    "build": "npm run build:css && npm run build:js",
     "watch:css": "tailwindcss -i ./src/input.css -o ./dist/output.css --watch",
+    "watch:js": "node --watch ./scripts/build-js.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

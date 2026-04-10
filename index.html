@@ -5,134 +5,356 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Data Access Portal</title>
     <link rel="stylesheet" href="./dist/output.css" />
-    <link rel="stylesheet" href="/adv/data-access-portal/styles-{{code[0].styles_version}}.css" />
+    <link rel="stylesheet" href="https://nmluk43.github.io/data-access-portal/dist/output.css" />
+    <!-- <link rel="stylesheet" href="/adv/data-access-portal/styles-{{code[0].styles_version}}.css" /> -->
+    <script src="./dist/app.js" defer></script>
+    <script src="/adv/data-access-portal/script-{{code[0].script_version}}.js" defer></script>
   </head>
   <body>
-    <main class="page-shell">
-      <header class="top-card">
-        <div class="top-card-row">
-          <h1 class="page-title">Art and Design Giving</h1>
-        </div>
+    <main class="page-shell dashboard-loading" id="dashboard-root">
+      <header class="page-header">
+        <h1 class="page-title">School of Business Giving</h1>
+        <p class="page-subtitle">
+          Monthly fundraising dashboard for frontline review, follow-up, and donor search.
+          The top section prioritizes current month performance and the action queue that needs staff attention.
+        </p>
+        <p class="loading-notice" id="loading-notice">
+          <span class="loading-spinner" aria-hidden="true"></span>
+          Loading donor data. This may take a second.
+        </p>
       </header>
 
-      <section class="overview-grid">
-        <article class="overview-summary-card">
-          <h2 class="section-title">Giving Overview</h2>
-          <dl class="metrics-list">
-            <div>
-              <dt class="metric-label">Current Month</dt>
-              <dd class="metric-value">$1,500</dd>
-            </div>
-            <div>
-              <dt class="metric-label">Previous Month</dt>
-              <dd class="metric-value">$10,500</dd>
-            </div>
-            <div>
-              <dt class="metric-label">Year to Date</dt>
-              <dd class="metric-value">$15,500</dd>
-            </div>
-          </dl>
-
-          <button class="btn-primary-outline" type="button">+ Add New Donor</button>
-        </article>
-
-        <article class="recent-donors-card">
-          <h2 class="section-title">Recent Donors</h2>
-          <div class="table-shell">
-            <table class="data-table">
-              <thead class="data-head">
-                <tr>
-                  <th class="data-th">Name</th>
-                  <th class="data-th">Date</th>
-                  <th class="data-th">Status</th>
-                  <th class="data-th">Giving Level</th>
-                </tr>
-              </thead>
-              <tbody class="data-body">
-                <tr>
-                  <td class="data-td">John Smith</td>
-                  <td class="data-td">01/15/2026</td>
-                  <td class="data-td">Alumni</td>
-                  <td class="data-td"><span class="pill-level pill-level-platinum">Platinum</span></td>
-                </tr>
-                <tr>
-                  <td class="data-td">John Smith</td>
-                  <td class="data-td">01/15/2026</td>
-                  <td class="data-td">Alumni</td>
-                  <td class="data-td"><span class="pill-level pill-level-gold">Gold</span></td>
-                </tr>
-                <tr>
-                  <td class="data-td">John Smith</td>
-                  <td class="data-td">01/15/2026</td>
-                  <td class="data-td">Alumni</td>
-                  <td class="data-td"><span class="pill-level pill-level-silver">Silver</span></td>
-                </tr>
-                <tr>
-                  <td class="data-td">John Smith</td>
-                  <td class="data-td">01/15/2026</td>
-                  <td class="data-td">Alumni</td>
-                  <td class="data-td"><span class="pill-level pill-level-bronze">Bronze</span></td>
-                </tr>
-                <tr>
-                  <td class="data-td">John Smith</td>
-                  <td class="data-td">01/15/2026</td>
-                  <td class="data-td">Alumni</td>
-                  <td class="data-td"><span class="pill-level pill-level-foundational">Foundational</span></td>
-                </tr>
-              </tbody>
-            </table>
+      <section class="top-dashboard-row">
+        <article class="month-overview-card">
+          <div class="overview-header">
+            <h2 class="section-title" id="month-overview-title">Month Giving Overview</h2>
+            <label class="month-selector-wrap">
+              <span class="month-selector-label">View Period</span>
+              <select class="month-selector" id="month-selector">
+                <option>Loading periods...</option>
+              </select>
+            </label>
           </div>
+
+          <section class="overview-hero">
+            <div class="hero-stat">
+              <p class="hero-stat-label" id="month-total-label">Current Period Total</p>
+              <p class="hero-stat-value loading-block loading-block-hero" id="month-total">$0</p>
+              <p class="hero-stat-detail loading-block loading-block-detail" id="month-total-detail">Loading current month giving...</p>
+            </div>
+
+            <div class="stats-grid">
+              <div class="stat-card">
+                <p class="stat-card-label">Recurring Giving</p>
+                <p class="stat-card-value loading-block loading-block-stat" id="recurring-total">$0</p>
+                <p class="stat-card-note loading-block loading-block-note" id="recurring-note">0% of monthly giving</p>
+              </div>
+              <div class="stat-card">
+                <p class="stat-card-label">One-Time Gifts</p>
+                <p class="stat-card-value loading-block loading-block-stat" id="one-time-total">$0</p>
+                <p class="stat-card-note loading-block loading-block-note" id="one-time-note">0% of monthly giving</p>
+              </div>
+              <div class="stat-card">
+                <p class="stat-card-label">Average Gift</p>
+                <p class="stat-card-value loading-block loading-block-stat" id="average-gift">$0</p>
+                <p class="stat-card-note loading-block loading-block-note" id="average-gift-note">Across 0 gifts this month</p>
+              </div>
+              <div class="stat-card">
+                <p class="stat-card-label">Largest Gift</p>
+                <p class="stat-card-value loading-block loading-block-stat" id="largest-gift">$0</p>
+                <p class="stat-card-note loading-block loading-block-note" id="largest-gift-note">Largest single gift this month</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="chart-grid">
+            <div class="chart-card">
+              <h3 class="chart-title">Gift Type Mix</h3>
+              <div class="donut-wrap">
+                <div class="donut-chart" id="gift-mix-chart">
+                  <div class="donut-hole"></div>
+                  <div class="donut-center loading-block loading-block-center" id="gift-mix-center">0%</div>
+                </div>
+                <div class="legend-list">
+                  <div class="legend-item">
+                    <div class="legend-label">
+                      <span class="legend-swatch-recurring"></span>
+                      <span>Recurring</span>
+                    </div>
+                    <span class="legend-value loading-block loading-block-legend" id="legend-recurring">$0</span>
+                  </div>
+                  <div class="legend-item">
+                    <div class="legend-label">
+                      <span class="legend-swatch-onetime"></span>
+                      <span>One-Time</span>
+                    </div>
+                    <span class="legend-value loading-block loading-block-legend" id="legend-one-time">$0</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="chart-card">
+              <h3 class="chart-title" id="trend-chart-title">Weekly Pace</h3>
+              <div class="trend-chart">
+                <div class="trend-bar-group">
+                  <div class="trend-bar-track">
+                    <div class="trend-bar trend-bar-week1" id="trend-bar-week1"></div>
+                  </div>
+                  <span class="trend-label" id="trend-label-1">Week 1</span>
+                </div>
+                <div class="trend-bar-group">
+                  <div class="trend-bar-track">
+                    <div class="trend-bar trend-bar-week2" id="trend-bar-week2"></div>
+                  </div>
+                  <span class="trend-label" id="trend-label-2">Week 2</span>
+                </div>
+                <div class="trend-bar-group">
+                  <div class="trend-bar-track">
+                    <div class="trend-bar trend-bar-week3" id="trend-bar-week3"></div>
+                  </div>
+                  <span class="trend-label" id="trend-label-3">Week 3</span>
+                </div>
+                <div class="trend-bar-group">
+                  <div class="trend-bar-track">
+                    <div class="trend-bar trend-bar-week4" id="trend-bar-week4"></div>
+                  </div>
+                  <span class="trend-label" id="trend-label-4">Week 4</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="designation-section">
+            <div class="designation-header">
+              <div>
+                <h3 class="chart-title">Top Designations</h3>
+                <p class="designation-summary" id="designation-summary">Loading designation activity...</p>
+              </div>
+              <button class="level-guide-button" id="designation-modal-open" type="button">View all designations</button>
+            </div>
+
+            <div class="designation-list" id="designation-list"></div>
+          </section>
         </article>
+
+        <aside class="alerts-card">
+          <h2 class="section-title">Alerts</h2>
+          <p class="section-subtitle">
+            Recent donors needing acknowledgement and lapsed donor follow-up notifications.
+          </p>
+
+          <div class="alerts-feed" id="alerts-feed"></div>
+        </aside>
       </section>
 
-      <section class="donor-groups-grid">
-        <article class="donor-group-card">
-          <h2 class="section-title">Alumni Donors</h2>
-          <div class="table-shell">
-            <table class="data-table">
-              <thead class="data-head">
-                <tr>
-                  <th class="data-th">Name</th>
-                  <th class="data-th">Date</th>
-                  <th class="data-th">Status</th>
-                  <th class="data-th">Giving Level</th>
-                </tr>
-              </thead>
-              <tbody class="data-body">
-                <tr>
-                  <td class="data-td">John Smith</td>
-                  <td class="data-td">01/15/2026</td>
-                  <td class="data-td">Alumni</td>
-                  <td class="data-td">Platinum</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </article>
+      <section class="search-card">
+        <div class="search-header">
+          <h2 class="section-title">Donor Search</h2>
+          <button class="level-guide-button" id="level-guide-open" type="button">What do levels mean?</button>
+        </div>
+        <p class="section-subtitle">
+          Default view shows donors from this month sorted by most recent gift date. Filters can be adjusted as needed.
+        </p>
 
-        <article class="donor-group-card">
-          <h2 class="section-title">Friend Donors</h2>
-          <div class="table-shell">
-            <table class="data-table">
-              <thead class="data-head">
-                <tr>
-                  <th class="data-th">Name</th>
-                  <th class="data-th">Date</th>
-                  <th class="data-th">Status</th>
-                  <th class="data-th">Giving Level</th>
-                </tr>
-              </thead>
-              <tbody class="data-body">
-                <tr>
-                  <td class="data-td">John Smith</td>
-                  <td class="data-td">01/15/2026</td>
-                  <td class="data-td">Friend</td>
-                  <td class="data-td">Platinum</td>
-                </tr>
-              </tbody>
-            </table>
+        <div class="search-shell">
+          <input
+            class="search-input"
+            type="search"
+            placeholder="Search donors by name, status, address, or giving level"
+            value=""
+          />
+        </div>
+
+        <section class="filters-panel">
+          <h3 class="filters-panel-title">Filters</h3>
+          <div class="filters-grid">
+            <label class="filter-field">
+              <span class="filter-label">Date Range</span>
+              <select class="filter-control" id="date-range-filter">
+                <option value="this-month" selected>This Month</option>
+                <option value="last-30">Last 30 Days</option>
+                <option value="quarter-to-date">Quarter to Date</option>
+                <option value="all-time">All Time</option>
+              </select>
+            </label>
+
+            <label class="filter-field">
+              <span class="filter-label">Gift Type</span>
+              <select class="filter-control" id="gift-type-filter">
+                <option value="all" selected>All Gifts</option>
+                <option value="recurring">Recurring</option>
+                <option value="one-time">One-Time</option>
+              </select>
+            </label>
+
+            <label class="filter-field">
+              <span class="filter-label">Segment</span>
+              <select class="filter-control" id="segment-filter">
+                <option value="all" selected>All Donors</option>
+                <option value="Alumnus">Alumnus</option>
+                <option value="Friend">Friend</option>
+                <option value="Former Student">Former Student</option>
+              </select>
+            </label>
+
+            <label class="filter-field">
+              <span class="filter-label">Sort By</span>
+              <select class="filter-control" id="sort-filter">
+                <option value="date-desc" selected>Gift Date: Newest</option>
+                <option value="date-asc">Gift Date: Oldest</option>
+                <option value="amount-desc">Gift Amount: High to Low</option>
+                <option value="name-asc">Name: A to Z</option>
+              </select>
+            </label>
           </div>
-        </article>
+
+          <div class="filter-chip-row">
+            <span class="filter-chip" id="date-chip">Default: This Month</span>
+            <span class="filter-chip" id="sort-chip">Default: Sort by Date</span>
+            <span class="filter-chip" id="results-chip">0 Results</span>
+          </div>
+        </section>
+
+        <div class="table-shell">
+          <table class="data-table">
+            <thead class="data-head">
+              <tr>
+                <th class="data-th">Donor</th>
+                <th class="data-th">Status</th>
+                <th class="data-th">Donor Status</th>
+                <th class="data-th">Fund</th>
+                <th class="data-th">Gift Date</th>
+                <th class="data-th">Gift Type</th>
+                <th class="data-th">Level</th>
+              </tr>
+            </thead>
+            <tbody class="data-body" id="donor-results"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="donor-modal" id="donor-modal" aria-hidden="true">
+        <div class="donor-modal-backdrop" data-modal-close="true"></div>
+        <div
+          class="donor-modal-panel"
+          aria-labelledby="donor-modal-title"
+          aria-modal="true"
+          role="dialog"
+        >
+          <div class="donor-modal-header">
+            <div>
+              <p class="donor-modal-eyebrow">Donor Details</p>
+              <h2 class="donor-modal-title" id="donor-modal-title">Loading donor</h2>
+              <div class="donor-modal-badges" id="modal-donor-badges"></div>
+            </div>
+            <button class="donor-modal-close" id="donor-modal-close" type="button" aria-label="Close donor details">
+              Close
+            </button>
+          </div>
+
+          <div class="donor-modal-grid">
+            <article class="donor-modal-card donor-modal-alert-card" id="modal-alert-card" hidden>
+              <p class="donor-modal-label">Current Alerts</p>
+              <div class="donor-modal-alert-list" id="modal-alert-content"></div>
+            </article>
+
+            <article class="donor-modal-card donor-modal-alert-card" id="modal-restrictions-card" hidden>
+              <p class="donor-modal-label">Contact Restrictions</p>
+              <div class="donor-modal-restrictions" id="modal-restrictions-content"></div>
+            </article>
+
+            <article class="donor-modal-card">
+              <p class="donor-modal-label">Status</p>
+              <p class="donor-modal-value" id="modal-donor-status">--</p>
+            </article>
+
+            <article class="donor-modal-card">
+              <p class="donor-modal-label">Address</p>
+              <p class="donor-modal-value donor-modal-value-address" id="modal-donor-address">--</p>
+            </article>
+
+            <article class="donor-modal-card">
+              <p class="donor-modal-label">Most Recent Gift</p>
+              <p class="donor-modal-value" id="modal-latest-gift">--</p>
+              <p class="donor-modal-meta" id="modal-latest-gift-meta">--</p>
+              <p class="donor-modal-meta" id="modal-latest-gift-fund">--</p>
+            </article>
+
+            <article class="donor-modal-card">
+              <p class="donor-modal-label">Giving Summary</p>
+              <p class="donor-modal-value" id="modal-giving-summary">--</p>
+              <p class="donor-modal-meta" id="modal-giving-meta">--</p>
+            </article>
+          </div>
+
+          <div class="donor-modal-history">
+            <div class="donor-modal-history-header">
+              <h3 class="donor-modal-history-title">Recent Giving History</h3>
+              <span class="donor-modal-history-count" id="modal-history-count">0 gifts</span>
+            </div>
+
+            <div class="table-shell">
+              <table class="data-table">
+                <thead class="data-head">
+                  <tr>
+                    <th class="data-th">Date</th>
+                    <th class="data-th">Fund</th>
+                    <th class="data-th">Level</th>
+                    <th class="data-th">Type</th>
+                    <th class="data-th">Method</th>
+                  </tr>
+                </thead>
+                <tbody class="data-body" id="modal-history-rows"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="donor-modal" id="level-guide-modal" aria-hidden="true">
+        <div class="donor-modal-backdrop" data-level-guide-close="true"></div>
+        <div
+          class="donor-modal-panel donor-modal-panel-sm"
+          aria-labelledby="level-guide-title"
+          aria-modal="true"
+          role="dialog"
+        >
+          <div class="donor-modal-header">
+            <div>
+              <p class="donor-modal-eyebrow">Giving Level Guide</p>
+              <h2 class="donor-modal-title" id="level-guide-title">Giving Levels</h2>
+            </div>
+            <button class="donor-modal-close" id="level-guide-close" type="button" aria-label="Close giving level guide">
+              Close
+            </button>
+          </div>
+
+          <div class="level-guide-list" id="level-guide-list"></div>
+        </div>
+      </section>
+
+      <section class="donor-modal" id="designation-modal" aria-hidden="true">
+        <div class="donor-modal-backdrop" data-designation-modal-close="true"></div>
+        <div
+          class="donor-modal-panel donor-modal-panel-sm"
+          aria-labelledby="designation-modal-title"
+          aria-modal="true"
+          role="dialog"
+        >
+          <div class="donor-modal-header">
+            <div>
+              <p class="donor-modal-eyebrow">Monthly Designation Activity</p>
+              <h2 class="donor-modal-title" id="designation-modal-title">Designations</h2>
+              <p class="section-subtitle designation-modal-subtitle" id="designation-modal-subtitle">Loading designation details...</p>
+            </div>
+            <button class="donor-modal-close" id="designation-modal-close" type="button" aria-label="Close designation details">
+              Close
+            </button>
+          </div>
+
+          <div class="designation-modal-list" id="designation-modal-list"></div>
+        </div>
       </section>
     </main>
   </body>
