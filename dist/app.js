@@ -452,6 +452,12 @@ function normalizeDonor(row) {
   const personGuid = row.person_guid || personInfo.person_guid || "";
   const preferredName = getRecordValue(personInfo, ["Person Preferred", "person_preferred"]);
   const lastName = getRecordValue(personInfo, ["Person Last", "person_last"]);
+  const organizationName = getRecordValue(personInfo, [
+    "Companies and Foundations Name",
+    "companies_and_foundations_name",
+    "Company Name",
+    "company_name"
+  ]);
   const status = getRecordValue(personInfo, ["Person Status", "person_status"]) || row.person_status || "Unknown";
   const donorStatus =
     getRecordValue(personInfo, ["Person Donor Status", "donor_status", "person_donor_status"]) ||
@@ -465,7 +471,10 @@ function normalizeDonor(row) {
     personGuid,
     preferredName: preferredName || row.person_preferred || "",
     lastName: lastName || row.person_last || "",
-    fullName: [preferredName || row.person_preferred, lastName || row.person_last].filter(Boolean).join(" ").trim() || "Unknown Donor",
+    fullName:
+      [preferredName || row.person_preferred, lastName || row.person_last].filter(Boolean).join(" ").trim() ||
+      organizationName ||
+      "Unknown Donor",
     status,
     donorStatus,
     address: formatAddress(getPrimaryAddress(row, personInfo)),
