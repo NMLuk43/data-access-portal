@@ -85,6 +85,11 @@ const donorByGuid = new Map();
 let selectedOverviewPeriod = "";
 let lastLoadErrorMessage = "";
 
+function isEmbeddedDataMode() {
+  const pageUrl = new URL(window.location.href);
+  return pageUrl.searchParams.get("embedded") === "1";
+}
+
 function getFetchUrl() {
   const pageUrl = new URL(window.location.href);
   const configuredDataUrl = pageUrl.searchParams.get("dataUrl");
@@ -1351,6 +1356,23 @@ function renderErrorState() {
   `;
 }
 
+function applyDonorPayload(payload) {
+  donorByGuid.clear();
+  const rows = Array.isArray(payload.row) ? payload.row : [];
+  donors = rows.map(normalizeDonor).filter((donor) => donor.latestGift);
+  selectedOverviewPeriod = getOverviewMonthValue(getMonthKey(new Date()));
+}
+
+function renderLoadedDashboard() {
+  renderOverviewMonthSelector();
+  renderCurrentMonthLabels();
+  renderCurrentMonthStats();
+  renderDesignationOverview();
+  renderAlerts();
+  renderDashboard();
+  dashboardRoot.classList.remove("dashboard-loading");
+}
+
 async function loadDonors() {
   renderLoadingState();
   donorByGuid.clear();
@@ -1376,9 +1398,38 @@ async function loadDonors() {
   }
 
   const payload = await response.json();
-  const rows = Array.isArray(payload.row) ? payload.row : [];
-  donors = rows.map(normalizeDonor).filter((donor) => donor.latestGift);
-  selectedOverviewPeriod = getOverviewMonthValue(getMonthKey(new Date()));
+  applyDonorPayload(payload);
+}
+
+function waitForEmbeddedPayload() {
+  return new Promise((resolve, reject) => {
+    const pageUrl = new URL(window.location.href);
+    const allowedOrigin = pageUrl.searchParams.get("sourceOrigin") || "";
+    const timeoutId = window.setTimeout(() => {
+      window.removeEventListener("message", handleMessage);
+      reject(new Error("Timed out waiting for donor data from the parent page."));
+    }, 15000);
+
+    function handleMessage(event) {
+      if (allowedOrigin && event.origin !== allowedOrigin) {
+        return;
+      }
+
+      if (!event.data || event.data.type !== "donor-data") {
+        return;
+      }
+
+      window.clearTimeout(timeoutId);
+      window.removeEventListener("message", handleMessage);
+      resolve(event.data.payload);
+    }
+
+    window.addEventListener("message", handleMessage);
+
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: "donor-data-ready" }, "*");
+    }
+  });
 }
 
 async function init() {
@@ -1387,14 +1438,14 @@ async function init() {
   renderLevelGuide();
 
   try {
-    await loadDonors();
-    renderOverviewMonthSelector();
-    renderCurrentMonthLabels();
-    renderCurrentMonthStats();
-    renderDesignationOverview();
-    renderAlerts();
-    renderDashboard();
-    dashboardRoot.classList.remove("dashboard-loading");
+    if (isEmbeddedDataMode()) {
+      const payload = await waitForEmbeddedPayload();
+      applyDonorPayload(payload);
+    } else {
+      await loadDonors();
+    }
+
+    renderLoadedDashboard();
   } catch (error) {
     lastLoadErrorMessage = error instanceof Error ? error.message : String(error);
     console.error(error);

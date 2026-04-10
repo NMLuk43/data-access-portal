@@ -33,11 +33,61 @@
   <body>
     <main class="embed-shell">
       <iframe
+        id="dashboard-frame"
         class="embed-frame"
-        src="https://nmluk43.github.io/data-access-portal/index.html?dataUrl=https%3A%2F%2Fconnect.cedarville.edu%2Fportal%2Fdata-access-portal%3Fcmd%3Dfetch-donors"
+        src="https://nmluk43.github.io/data-access-portal/index.html?embedded=1&sourceOrigin=https%3A%2F%2Fconnect.cedarville.edu"
         title="School of Business Giving Dashboard"
         loading="lazy"
       ></iframe>
     </main>
+    <script>
+      const dashboardFrame = document.getElementById("dashboard-frame");
+      const dashboardOrigin = "https://nmluk43.github.io";
+      const donorDataUrl = "/portal/data-access-portal?cmd=fetch-donors";
+      let donorPayload = null;
+      let iframeReady = false;
+
+      async function loadDonorPayload() {
+        const response = await fetch(donorDataUrl, {
+          credentials: "same-origin"
+        });
+
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
+
+        donorPayload = await response.json();
+        postPayloadIfReady();
+      }
+
+      function postPayloadIfReady() {
+        if (!iframeReady || !donorPayload || !dashboardFrame.contentWindow) {
+          return;
+        }
+
+        dashboardFrame.contentWindow.postMessage(
+          {
+            type: "donor-data",
+            payload: donorPayload
+          },
+          dashboardOrigin
+        );
+      }
+
+      window.addEventListener("message", (event) => {
+        if (event.origin !== dashboardOrigin) {
+          return;
+        }
+
+        if (event.data && event.data.type === "donor-data-ready") {
+          iframeReady = true;
+          postPayloadIfReady();
+        }
+      });
+
+      loadDonorPayload().catch((error) => {
+        console.error(error);
+      });
+    </script>
   </body>
 </html>
