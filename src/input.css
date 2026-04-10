@@ -30,7 +30,7 @@
   }
 
   .page-subtitle {
-    @apply mt-10 max-w-3xl text-sm leading-6 text-muted;
+    @apply mt-1 max-w-3xl text-sm leading-6 text-muted;
   }
 
   .loading-notice {
