@@ -1,12 +1,4 @@
 /* Built from src/app.js */
-const LEVELS = [
-  { label: "Gold", minAmount: 5000, className: "pill-level-gold", rangeLabel: "$5,000 and above" },
-  { label: "Platinum", minAmount: 1000, className: "pill-level-platinum", rangeLabel: "$1,000 to $4,999" },
-  { label: "Silver", minAmount: 500, className: "pill-level-silver", rangeLabel: "$500 to $999" },
-  { label: "Bronze", minAmount: 100, className: "pill-level-bronze", rangeLabel: "$100 to $499" },
-  { label: "Foundational", minAmount: 0, className: "pill-level-foundational", rangeLabel: "Under $100" }
-];
-
 const THANK_YOU_WINDOW_DAYS = 14;
 const donorSearchInput = document.querySelector(".search-input");
 const dateRangeFilter = document.querySelector("#date-range-filter");
@@ -18,9 +10,14 @@ const alertsFeed = document.querySelector("#alerts-feed");
 const resultsChip = document.querySelector("#results-chip");
 const dateChip = document.querySelector("#date-chip");
 const sortChip = document.querySelector("#sort-chip");
+const fuzzyChip = document.querySelector("#fuzzy-chip");
 const monthOverviewTitle = document.querySelector("#month-overview-title");
 const monthTotalLabel = document.querySelector("#month-total-label");
 const monthSelector = document.querySelector("#month-selector");
+const summaryPeriodLabel = document.querySelector("#summary-period-label");
+const summaryPeriodTotal = document.querySelector("#summary-period-total");
+const summaryRecurringDonors = document.querySelector("#summary-recurring-donors");
+const summaryYoyDelta = document.querySelector("#summary-yoy-delta");
 
 const monthTotal = document.querySelector("#month-total");
 const monthTotalDetail = document.querySelector("#month-total-detail");
@@ -57,6 +54,15 @@ const weekBars = [
   document.querySelector("#trend-bar-week3"),
   document.querySelector("#trend-bar-week4")
 ];
+const firstRepeatSummary = document.querySelector("#first-repeat-summary");
+const firstRepeatBars = document.querySelector("#first-repeat-bars");
+const yoySummary = document.querySelector("#yoy-summary");
+const yoyCurrentPeriod = document.querySelector("#yoy-current-period");
+const yoyPriorPeriod = document.querySelector("#yoy-prior-period");
+const yoyDeltaValue = document.querySelector("#yoy-delta-value");
+const benchmarkDeltaValue = document.querySelector("#benchmark-delta-value");
+const statusMixSummary = document.querySelector("#status-mix-summary");
+const statusMixList = document.querySelector("#status-mix-list");
 const dashboardRoot = document.querySelector("#dashboard-root");
 const donorModal = document.querySelector("#donor-modal");
 const donorModalClose = document.querySelector("#donor-modal-close");
@@ -75,15 +81,19 @@ const modalAlertCard = document.querySelector("#modal-alert-card");
 const modalAlertContent = document.querySelector("#modal-alert-content");
 const modalRestrictionsCard = document.querySelector("#modal-restrictions-card");
 const modalRestrictionsContent = document.querySelector("#modal-restrictions-content");
-const levelGuideOpen = document.querySelector("#level-guide-open");
-const levelGuideModal = document.querySelector("#level-guide-modal");
-const levelGuideClose = document.querySelector("#level-guide-close");
-const levelGuideList = document.querySelector("#level-guide-list");
+const modalActionList = document.querySelector("#modal-action-list");
+const modalNotesTextarea = document.querySelector("#modal-notes-textarea");
+const modalSaveNote = document.querySelector("#modal-save-note");
+const modalActivityList = document.querySelector("#modal-activity-list");
+const modalTimelineList = document.querySelector("#modal-timeline-list");
+const modalMarkThanked = document.querySelector("#modal-mark-thanked");
 
 let donors = [];
 const donorByGuid = new Map();
 let selectedOverviewPeriod = "";
 let lastLoadErrorMessage = "";
+let activeModal = null;
+const stewardshipState = new Map();
 
 function isEmbeddedDataMode() {
   const pageUrl = new URL(window.location.href);
@@ -93,6 +103,35 @@ function isEmbeddedDataMode() {
 function getEmbeddedSourceOrigin() {
   const pageUrl = new URL(window.location.href);
   return pageUrl.searchParams.get("sourceOrigin") || "";
+}
+
+function shouldUseLocalSampleData() {
+  const pageUrl = new URL(window.location.href);
+  const hostname = pageUrl.hostname.toLowerCase();
+
+  if (pageUrl.searchParams.get("sampleData") === "1") {
+    return true;
+  }
+
+  if (pageUrl.protocol === "file:") {
+    return true;
+  }
+
+  if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]") {
+    return true;
+  }
+
+  if (
+    hostname.endsWith(".local") ||
+    hostname.endsWith(".localhost") ||
+    hostname.startsWith("192.168.") ||
+    hostname.startsWith("10.") ||
+    hostname.startsWith("172.")
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
 function postEmbedHeight() {
@@ -124,6 +163,10 @@ function getFetchUrl() {
     return new URL(configuredDataUrl, pageUrl.href).toString();
   }
 
+  if (shouldUseLocalSampleData()) {
+    return new URL("./sample-data.json", pageUrl.href).toString();
+  }
+
   const url = new URL(window.location.href);
   url.search = "";
   url.searchParams.set("cmd", "fetch-donors");
@@ -153,6 +196,39 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
+function normalizeForSearch(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
+function isFuzzyMatch(haystack, needle) {
+  const normalizedHaystack = normalizeForSearch(haystack);
+  const normalizedNeedle = normalizeForSearch(needle);
+
+  if (!normalizedNeedle) {
+    return true;
+  }
+
+  if (normalizedHaystack.includes(normalizedNeedle)) {
+    return true;
+  }
+
+  let haystackIndex = 0;
+
+  for (const character of normalizedNeedle) {
+    haystackIndex = normalizedHaystack.indexOf(character, haystackIndex);
+
+    if (haystackIndex === -1) {
+      return false;
+    }
+
+    haystackIndex += 1;
+  }
+
+  return true;
+}
+
 function formatCurrency(value) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -173,6 +249,18 @@ function formatDate(value) {
     day: "2-digit",
     year: "numeric"
   }).format(date);
+}
+
+function formatDeltaCurrency(value) {
+  if (!Number.isFinite(value)) {
+    return "--";
+  }
+
+  if (value === 0) {
+    return "$0";
+  }
+
+  return `${value > 0 ? "+" : "-"}${formatCurrency(Math.abs(value))}`;
 }
 
 function getMonthKey(referenceDate) {
@@ -321,14 +409,6 @@ function getDateDifferenceInDays(laterDate, earlierDate) {
   return Math.floor((laterDate - earlierDate) / millisecondsPerDay);
 }
 
-function getGivingLevel(amount) {
-  return LEVELS.find((level) => amount >= level.minAmount) || LEVELS[LEVELS.length - 1];
-}
-
-function getGivingLevelBadgeMarkup(level) {
-  return `<span class="pill-level ${level.className}" title="${escapeHtml(level.rangeLabel)}">${level.label}</span>`;
-}
-
 function getDonorStatusBadgeMarkup(donorStatus) {
   const normalizedStatus = String(donorStatus || "Unknown").trim();
   const statusMap = {
@@ -448,8 +528,6 @@ function normalizeDonor(row) {
   const personInfo = getPrimaryPersonInfo(row);
   const gifts = parseArrayLikeValue(row.giving_history).map(normalizeGift);
   const latestGift = getMostRecentGift(gifts);
-  const latestAmount = latestGift ? latestGift.amount : 0;
-  const personGuid = row.person_guid || personInfo.person_guid || "";
   const preferredName = getRecordValue(personInfo, ["Person Preferred", "person_preferred"]);
   const lastName = getRecordValue(personInfo, ["Person Last", "person_last"]);
   const organizationName = getRecordValue(personInfo, [
@@ -466,27 +544,34 @@ function normalizeDonor(row) {
   const contactRestriction =
     getRecordValue(personInfo, ["Person Contact Restriction", "contact_restriction", "person_contact_restriction"]) ||
     row.contact_restriction;
+  const fullName =
+    [preferredName || row.person_preferred, lastName || row.person_last].filter(Boolean).join(" ").trim() ||
+    organizationName ||
+    "Unknown Donor";
+  const fallbackPersonGuid = [
+    fullName,
+    latestGift ? latestGift.dateRaw : "",
+    latestGift ? latestGift.fundName : "",
+    latestGift ? latestGift.amount : ""
+  ]
+    .filter(Boolean)
+    .join("::");
+  const personGuid = row.person_guid || personInfo.person_guid || fallbackPersonGuid;
 
   const donor = {
     personGuid,
     preferredName: preferredName || row.person_preferred || "",
     lastName: lastName || row.person_last || "",
-    fullName:
-      [preferredName || row.person_preferred, lastName || row.person_last].filter(Boolean).join(" ").trim() ||
-      organizationName ||
-      "Unknown Donor",
+    fullName,
     status,
     donorStatus,
     address: formatAddress(getPrimaryAddress(row, personInfo)),
     contactRestrictions: normalizeContactRestrictions(contactRestriction),
     gifts,
-    latestGift,
-    level: getGivingLevel(latestAmount)
+    latestGift
   };
 
-  if (personGuid) {
-    donorByGuid.set(personGuid, donor);
-  }
+  donorByGuid.set(personGuid, donor);
 
   return donor;
 }
@@ -555,11 +640,9 @@ function donorMatchesSearch(donor, searchTerm) {
     return true;
   }
 
-  const haystack = [donor.fullName, donor.status, donor.donorStatus, donor.address, donor.level.label]
-    .join(" ")
-    .toLowerCase();
+  const haystack = [donor.fullName, donor.status, donor.donorStatus, donor.address, formatCurrency(donor.latestGift.amount)].join(" ");
 
-  return haystack.includes(searchTerm);
+  return haystack.toLowerCase().includes(searchTerm) || isFuzzyMatch(haystack, searchTerm);
 }
 
 function getFilteredDonors() {
@@ -625,7 +708,7 @@ function renderDonorRows(items) {
   if (items.length === 0) {
     donorResults.innerHTML = `
       <tr>
-        <td class="data-td" colspan="7">No donors match the current filters.</td>
+        <td class="data-td" colspan="4">No donors match the current filters.</td>
       </tr>
     `;
     return;
@@ -640,6 +723,7 @@ function renderDonorRows(items) {
       const donorSegment = isAnonymousDisplay ? "Private" : donor.status;
       const donorStatusBadge = isAnonymousDisplay ? "--" : getDonorStatusBadgeMarkup(donor.donorStatus);
       const fundName = donor.latestMatchingGift.fundName || "--";
+      const anonymousBadge = isAnonymousDisplay ? `<div class="donor-inline-flags"><span class="alert-badge alert-badge-anonymous">Anonymous</span></div>` : "";
       const rowAttributes = isAnonymousDisplay
         ? `class="donor-row donor-row-disabled"`
         : `class="donor-row" data-person-guid="${escapeHtml(donor.personGuid)}"`;
@@ -648,15 +732,13 @@ function renderDonorRows(items) {
         <tr ${rowAttributes}>
           <td class="data-td">
             <div class="donor-name">${escapeHtml(donorName)}</div>
+            ${anonymousBadge}
             ${!isAnonymousDisplay && donor.contactRestrictions.length > 0 ? `<div class="donor-inline-flags">${getRestrictionBadgeMarkup()}</div>` : ""}
             <div class="donor-subtext">${escapeHtml(donorSubtext)}</div>
           </td>
-          <td class="data-td">${escapeHtml(donorSegment)}</td>
-          <td class="data-td">${donorStatusBadge}</td>
-          <td class="data-td">${escapeHtml(fundName)}</td>
           <td class="data-td">${formatDate(donor.latestMatchingGift.date)}</td>
-          <td class="data-td">${giftTypeLabel}</td>
-          <td class="data-td">${getGivingLevelBadgeMarkup(donor.level)}</td>
+          <td class="data-td">${formatCurrency(donor.latestMatchingGift.amount)}</td>
+          <td class="data-td">${escapeHtml(donorSegment)}</td>
         </tr>
       `;
     })
@@ -793,6 +875,201 @@ function getSelectedMonthFundStats() {
     totalGifts: monthlyGifts.length,
     scholarshipTotal
   };
+}
+
+function getOverviewGiftsForPeriod(periodValue = selectedOverviewPeriod || getOverviewMonthValue(getMonthKey(new Date()))) {
+  const referenceDate = getPeriodReferenceDate(periodValue);
+
+  return donors
+    .flatMap((donor) => donor.gifts.map((gift) => ({ donor, gift })))
+    .filter(({ gift }) => isQualifyingGift(gift))
+    .filter(({ gift }) => giftMatchesOverviewPeriod(gift, periodValue))
+    .filter(({ gift }) => isPastOrPresentGift(gift, referenceDate));
+}
+
+function getComparisonPeriodValue(periodValue) {
+  const { type, key } = parseOverviewPeriod(periodValue);
+
+  if (type === "year") {
+    return getOverviewYearValue(String(Number(key) - 1));
+  }
+
+  const [year, month] = key.split("-").map(Number);
+  return getOverviewMonthValue(`${year - 1}-${String(month).padStart(2, "0")}`);
+}
+
+function getPeriodTotal(periodValue) {
+  return getOverviewGiftsForPeriod(periodValue).reduce((sum, entry) => sum + entry.gift.amount, 0);
+}
+
+function getRecurringDonorCount(periodValue) {
+  return new Set(
+    getOverviewGiftsForPeriod(periodValue)
+      .filter(({ gift }) => gift.recurring)
+      .map(({ donor }) => donor.personGuid)
+  ).size;
+}
+
+function getYearOverYearStats(periodValue = selectedOverviewPeriod || getOverviewMonthValue(getMonthKey(new Date()))) {
+  const currentTotal = getPeriodTotal(periodValue);
+  const comparisonPeriod = getComparisonPeriodValue(periodValue);
+  const priorTotal = getPeriodTotal(comparisonPeriod);
+  const delta = currentTotal - priorTotal;
+  const percentDelta = priorTotal > 0 ? Math.round((delta / priorTotal) * 100) : null;
+  const benchmarkDelta = currentTotal - 150000;
+
+  return {
+    currentTotal,
+    priorTotal,
+    delta,
+    percentDelta,
+    benchmarkDelta,
+    comparisonLabel: formatOverviewPeriodLabel(comparisonPeriod)
+  };
+}
+
+function getFirstTimeRepeatStats(periodValue = selectedOverviewPeriod || getOverviewMonthValue(getMonthKey(new Date()))) {
+  const entries = getOverviewGiftsForPeriod(periodValue);
+  const donorBuckets = new Map();
+
+  for (const { donor, gift } of entries) {
+    const current = donorBuckets.get(donor.personGuid) || {
+      donor,
+      priorGiftCount: donor.gifts.filter((entry) => isQualifyingGift(entry) && entry.date && gift.date && entry.date < gift.date).length,
+      amount: 0
+    };
+    current.amount += gift.amount;
+    donorBuckets.set(donor.personGuid, current);
+  }
+
+  let firstTimeCount = 0;
+  let repeatCount = 0;
+  let firstTimeAmount = 0;
+  let repeatAmount = 0;
+
+  for (const stats of donorBuckets.values()) {
+    if (stats.priorGiftCount === 0) {
+      firstTimeCount += 1;
+      firstTimeAmount += stats.amount;
+    } else {
+      repeatCount += 1;
+      repeatAmount += stats.amount;
+    }
+  }
+
+  return { firstTimeCount, repeatCount, firstTimeAmount, repeatAmount };
+}
+
+function getPersonStatusMix(periodValue = selectedOverviewPeriod || getOverviewMonthValue(getMonthKey(new Date()))) {
+  const donorMap = new Map();
+
+  for (const { donor } of getOverviewGiftsForPeriod(periodValue)) {
+    const current = donorMap.get(donor.personGuid) || { label: donor.status || "Unknown", count: 0 };
+    current.count += 1;
+    donorMap.set(donor.personGuid, current);
+  }
+
+  const statusTotals = new Map();
+
+  for (const entry of donorMap.values()) {
+    statusTotals.set(entry.label, (statusTotals.get(entry.label) || 0) + 1);
+  }
+
+  return [...statusTotals.entries()]
+    .map(([label, count]) => ({ label, count }))
+    .sort((left, right) => right.count - left.count);
+}
+
+function getStewardshipState(personGuid) {
+  if (!stewardshipState.has(personGuid)) {
+    stewardshipState.set(personGuid, {
+      thanked: false,
+      lastActionDate: "",
+      notes: "",
+      history: []
+    });
+  }
+
+  return stewardshipState.get(personGuid);
+}
+
+function addStewardshipHistory(personGuid, label) {
+  const state = getStewardshipState(personGuid);
+  state.lastActionDate = new Date().toISOString();
+  state.history.unshift({
+    label,
+    timestamp: state.lastActionDate
+  });
+}
+
+function renderSummaryBar() {
+  const periodValue = selectedOverviewPeriod || getOverviewMonthValue(getMonthKey(new Date()));
+  const stats = getSelectedOverviewMonthStats();
+  const yoy = getYearOverYearStats(periodValue);
+
+  summaryPeriodLabel.textContent = formatOverviewPeriodLabel(periodValue);
+  summaryPeriodTotal.textContent = formatCurrency(stats.total);
+  summaryRecurringDonors.textContent = String(getRecurringDonorCount(periodValue));
+  summaryYoyDelta.textContent = yoy.percentDelta === null ? formatDeltaCurrency(yoy.delta) : `${formatDeltaCurrency(yoy.delta)} (${yoy.percentDelta > 0 ? "+" : ""}${yoy.percentDelta}%)`;
+}
+
+function renderInsightCards() {
+  const periodValue = selectedOverviewPeriod || getOverviewMonthValue(getMonthKey(new Date()));
+  const firstRepeat = getFirstTimeRepeatStats(periodValue);
+  const yoy = getYearOverYearStats(periodValue);
+  const statusMix = getPersonStatusMix(periodValue);
+  const totalMixAmount = Math.max(firstRepeat.firstTimeAmount + firstRepeat.repeatAmount, 1);
+
+  firstRepeatSummary.textContent = `${firstRepeat.firstTimeCount} first-time donors and ${firstRepeat.repeatCount} repeat donors in ${formatOverviewPeriodLabel(periodValue)}.`;
+  firstRepeatBars.innerHTML = [
+    {
+      label: "First-Time",
+      amount: firstRepeat.firstTimeAmount,
+      count: firstRepeat.firstTimeCount,
+      percent: Math.round((firstRepeat.firstTimeAmount / totalMixAmount) * 100)
+    },
+    {
+      label: "Repeat",
+      amount: firstRepeat.repeatAmount,
+      count: firstRepeat.repeatCount,
+      percent: Math.round((firstRepeat.repeatAmount / totalMixAmount) * 100)
+    }
+  ]
+    .map(
+      (item) => `
+        <div class="comparison-row">
+          <div class="comparison-row-copy">
+            <p class="comparison-row-label">${item.label}</p>
+            <p class="comparison-row-meta">${item.count} donor${item.count === 1 ? "" : "s"} · ${formatCurrency(item.amount)}</p>
+          </div>
+          <div class="comparison-row-bar"><span style="width:${Math.max(item.percent, 8)}%"></span></div>
+          <p class="comparison-row-value">${item.percent}%</p>
+        </div>
+      `
+    )
+    .join("");
+
+  yoySummary.textContent = `${formatOverviewPeriodLabel(periodValue)} compared with ${yoy.comparisonLabel}.`;
+  yoyCurrentPeriod.textContent = formatCurrency(yoy.currentTotal);
+  yoyPriorPeriod.textContent = formatCurrency(yoy.priorTotal);
+  yoyDeltaValue.textContent = formatDeltaCurrency(yoy.delta);
+  benchmarkDeltaValue.textContent = formatDeltaCurrency(yoy.benchmarkDelta);
+
+  const totalStatuses = statusMix.reduce((sum, item) => sum + item.count, 0);
+  statusMixSummary.textContent = `${totalStatuses} donor records contributed in the selected period.`;
+  statusMixList.innerHTML = statusMix
+    .map(
+      (item) => `
+        <div class="status-mix-item">
+          <div class="status-mix-copy">
+            <p class="status-mix-label">${escapeHtml(item.label)}</p>
+            <p class="status-mix-meta">${item.count} donor${item.count === 1 ? "" : "s"}</p>
+          </div>
+          <div class="status-mix-bar"><span style="width:${Math.max(Math.round((item.count / Math.max(totalStatuses, 1)) * 100), 10)}%"></span></div>
+        </div>
+      `
+    )
+    .join("");
 }
 
 function renderDesignationOverview() {
@@ -1043,6 +1320,56 @@ function getGivingSummary(donor) {
   };
 }
 
+function getFocusableElements(container) {
+  return [...container.querySelectorAll("button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])")].filter(
+    (element) => !element.hasAttribute("disabled") && !element.getAttribute("aria-hidden")
+  );
+}
+
+function trapFocus(event, modalElement) {
+  if (event.key !== "Tab") {
+    return;
+  }
+
+  const focusable = getFocusableElements(modalElement);
+
+  if (focusable.length === 0) {
+    event.preventDefault();
+    return;
+  }
+
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+    return;
+  }
+
+  if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
+function openModal(modalElement) {
+  activeModal = modalElement;
+  modalElement.classList.add("is-open");
+  modalElement.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+  getFocusableElements(modalElement)[0]?.focus();
+}
+
+function closeModal(modalElement) {
+  modalElement.classList.remove("is-open");
+  modalElement.setAttribute("aria-hidden", "true");
+  if (activeModal === modalElement) {
+    activeModal = null;
+  }
+  document.body.style.overflow = donorModal.classList.contains("is-open") || designationModal.classList.contains("is-open") ? "hidden" : "";
+}
+
 function renderModalHistoryRows(donor) {
   const recentGifts = donor.gifts
     .filter(isQualifyingGift)
@@ -1064,20 +1391,83 @@ function renderModalHistoryRows(donor) {
     .map((gift) => {
       const giftType = gift.recurring ? "Recurring" : gift.type || "One-Time";
       const method = gift.method || "--";
-      const level = getGivingLevel(gift.amount);
       const fundName = gift.fundName || "--";
 
       return `
         <tr>
           <td class="data-td">${formatDate(gift.date)}</td>
           <td class="data-td">${escapeHtml(fundName)}</td>
-          <td class="data-td">${getGivingLevelBadgeMarkup(level)}</td>
+          <td class="data-td">${formatCurrency(gift.amount)}</td>
           <td class="data-td">${escapeHtml(giftType)}</td>
           <td class="data-td">${escapeHtml(method)}</td>
         </tr>
       `;
     })
     .join("");
+}
+
+function renderModalStewardship(donor) {
+  const state = getStewardshipState(donor.personGuid);
+  const donorAlerts = getAlertsForDonor(donor.personGuid);
+  const daysSinceGift = donor.latestGift?.date ? getDateDifferenceInDays(new Date(), donor.latestGift.date) : null;
+  const suggestedActions = [
+    donorAlerts.some((alert) => alert.badgeLabel === "Thank You")
+      ? `Send thank-you note for ${formatCurrency(donor.latestGift.amount)} gift`
+      : `Review stewardship touchpoint for ${formatOverviewPeriodLabel(selectedOverviewPeriod)}`,
+    donor.donorStatus === "Lapsed" ? "Queue reactivation outreach" : "Confirm next cultivation touchpoint",
+    donor.contactRestrictions.length > 0 ? "Respect contact restrictions before outreach" : "Prepare outreach channel recommendation"
+  ];
+
+  modalActionList.innerHTML = suggestedActions
+    .map(
+      (action, index) => `
+        <button class="modal-task-button" data-modal-task="${index}" type="button">
+          <span>${escapeHtml(action)}</span>
+          <span class="modal-mock-badge">Mockup</span>
+        </button>
+      `
+    )
+    .join("");
+
+  modalNotesTextarea.value = state.notes;
+  modalActivityList.innerHTML = [
+    ...(state.thanked ? [{ label: "Marked as thanked", timestamp: state.lastActionDate }] : []),
+    ...state.history
+  ]
+    .slice(0, 4)
+    .map(
+      (item) => `
+        <div class="modal-activity-item">
+          <p class="modal-activity-title">${escapeHtml(item.label)}</p>
+          <p class="modal-activity-meta">${item.timestamp ? new Date(item.timestamp).toLocaleString("en-US") : "Suggested activity"}</p>
+        </div>
+      `
+    )
+    .join("") || `<div class="modal-activity-item"><p class="modal-activity-title">No recorded actions yet</p><p class="modal-activity-meta">Mock action history will appear here.</p></div>`;
+
+  modalTimelineList.innerHTML = donor.gifts
+    .filter(isQualifyingGift)
+    .sort((left, right) => right.date - left.date || right.amount - left.amount)
+    .slice(0, 5)
+    .map(
+      (gift) => `
+        <div class="modal-timeline-item">
+          <p class="modal-timeline-title">${formatCurrency(gift.amount)} · ${escapeHtml(gift.fundName || "Unassigned Fund")}</p>
+          <p class="modal-timeline-meta">${formatDate(gift.date)} · ${gift.recurring ? "Recurring" : gift.type || "One-Time"}</p>
+        </div>
+      `
+    )
+    .join("");
+
+  modalMarkThanked.textContent = state.thanked ? "Thanked" : "Mark Thanked";
+  modalMarkThanked.disabled = state.thanked;
+  modalMarkThanked.dataset.personGuid = donor.personGuid;
+  modalSaveNote.dataset.personGuid = donor.personGuid;
+  modalActionList.dataset.personGuid = donor.personGuid;
+
+  if (daysSinceGift !== null) {
+    modalGivingMeta.textContent = `${modalGivingMeta.textContent} · ${daysSinceGift} day${daysSinceGift === 1 ? "" : "s"} since latest gift`;
+  }
 }
 
 function openDonorModal(personGuid) {
@@ -1089,17 +1479,24 @@ function openDonorModal(personGuid) {
 
   const givingSummary = getGivingSummary(donor);
   const latestGiftType = donor.latestGift.recurring ? "Recurring" : donor.latestGift.type || "One-Time";
+  const badgeMarkup = [
+    getDonorStatusBadgeMarkup(donor.donorStatus),
+    donor.contactRestrictions.length > 0 ? getRestrictionBadgeMarkup() : ""
+  ]
+    .filter(Boolean)
+    .join("");
 
   donorModalTitle.textContent = donor.fullName;
-  modalDonorBadges.innerHTML = donor.contactRestrictions.length > 0 ? getRestrictionBadgeMarkup() : "";
-  modalDonorStatus.textContent = `${donor.status} · ${donor.donorStatus}`;
+  modalDonorBadges.innerHTML = badgeMarkup;
+  modalDonorStatus.textContent = donor.status;
   modalDonorAddress.textContent = donor.address;
-  modalLatestGift.textContent = `${donor.level.label} on ${formatDate(donor.latestGift.date)}`;
+  modalLatestGift.textContent = `${formatCurrency(donor.latestGift.amount)} on ${formatDate(donor.latestGift.date)}`;
   modalLatestGiftMeta.textContent = `${latestGiftType} gift via ${donor.latestGift.method || "Unknown method"}`;
   modalLatestGiftFund.textContent = donor.latestGift.fundName || "Fund unavailable";
-  modalGivingSummary.textContent = `${donor.level.label} donor`;
+  modalGivingSummary.textContent = formatCurrency(givingSummary.total);
   modalGivingMeta.textContent = `${givingSummary.count} gifts on record · ${givingSummary.recurringCount} recurring gifts`;
   renderModalHistoryRows(donor);
+  renderModalStewardship(donor);
 
   const donorAlerts = getAlertsForDonor(personGuid);
 
@@ -1137,59 +1534,26 @@ function openDonorModal(personGuid) {
     modalRestrictionsContent.innerHTML = "";
   }
 
-  donorModal.classList.add("is-open");
-  donorModal.setAttribute("aria-hidden", "false");
-  document.body.style.overflow = "hidden";
+  openModal(donorModal);
 }
 
 function closeDonorModal() {
-  donorModal.classList.remove("is-open");
-  donorModal.setAttribute("aria-hidden", "true");
-  document.body.style.overflow =
-    levelGuideModal.classList.contains("is-open") || designationModal.classList.contains("is-open") ? "hidden" : "";
-}
-
-function renderLevelGuide() {
-  levelGuideList.innerHTML = LEVELS.map((level) => `
-    <div class="level-guide-item">
-      <div class="level-guide-item-copy">
-        <div class="level-guide-item-label">${escapeHtml(level.label)}</div>
-        <div class="level-guide-item-range">${escapeHtml(level.rangeLabel)}</div>
-      </div>
-      ${getGivingLevelBadgeMarkup(level)}
-    </div>
-  `).join("");
-}
-
-function openLevelGuideModal() {
-  levelGuideModal.classList.add("is-open");
-  levelGuideModal.setAttribute("aria-hidden", "false");
-  document.body.style.overflow = "hidden";
-}
-
-function closeLevelGuideModal() {
-  levelGuideModal.classList.remove("is-open");
-  levelGuideModal.setAttribute("aria-hidden", "true");
-  document.body.style.overflow =
-    donorModal.classList.contains("is-open") || designationModal.classList.contains("is-open") ? "hidden" : "";
+  closeModal(donorModal);
 }
 
 function openDesignationModal() {
   renderDesignationModal();
-  designationModal.classList.add("is-open");
-  designationModal.setAttribute("aria-hidden", "false");
-  document.body.style.overflow = "hidden";
+  openModal(designationModal);
 }
 
 function closeDesignationModal() {
-  designationModal.classList.remove("is-open");
-  designationModal.setAttribute("aria-hidden", "true");
-  document.body.style.overflow =
-    donorModal.classList.contains("is-open") || levelGuideModal.classList.contains("is-open") ? "hidden" : "";
+  closeModal(designationModal);
 }
 
 function bindFilters() {
   const rerender = () => {
+    renderSummaryBar();
+    renderInsightCards();
     renderDashboard();
   };
 
@@ -1213,6 +1577,8 @@ function bindFilters() {
     selectedOverviewPeriod = monthSelector.value;
     renderCurrentMonthLabels();
     renderCurrentMonthStats();
+    renderSummaryBar();
+    renderInsightCards();
     renderDesignationOverview();
     renderAlerts();
 
@@ -1248,15 +1614,42 @@ function bindFilters() {
   });
 
   donorModalClose.addEventListener("click", closeDonorModal);
-  levelGuideOpen.addEventListener("click", openLevelGuideModal);
-  levelGuideClose.addEventListener("click", closeLevelGuideModal);
   designationModalOpen.addEventListener("click", openDesignationModal);
   designationModalClose.addEventListener("click", closeDesignationModal);
+  modalMarkThanked.addEventListener("click", () => {
+    const personGuid = modalMarkThanked.dataset.personGuid;
 
-  levelGuideModal.addEventListener("click", (event) => {
-    if (event.target.closest("[data-level-guide-close='true']")) {
-      closeLevelGuideModal();
+    if (!personGuid) {
+      return;
     }
+
+    const state = getStewardshipState(personGuid);
+    state.thanked = true;
+    addStewardshipHistory(personGuid, "Marked thank-you complete");
+    renderModalStewardship(donorByGuid.get(personGuid));
+  });
+  modalSaveNote.addEventListener("click", () => {
+    const personGuid = modalSaveNote.dataset.personGuid;
+
+    if (!personGuid) {
+      return;
+    }
+
+    const state = getStewardshipState(personGuid);
+    state.notes = modalNotesTextarea.value.trim();
+    addStewardshipHistory(personGuid, state.notes ? "Saved stewardship note" : "Cleared stewardship note");
+    renderModalStewardship(donorByGuid.get(personGuid));
+  });
+  modalActionList.addEventListener("click", (event) => {
+    const taskButton = event.target.closest("[data-modal-task]");
+    const personGuid = modalActionList.dataset.personGuid;
+
+    if (!taskButton || !personGuid) {
+      return;
+    }
+
+    addStewardshipHistory(personGuid, `Queued action: ${taskButton.querySelector("span")?.textContent || taskButton.textContent}`);
+    renderModalStewardship(donorByGuid.get(personGuid));
   });
 
   designationModal.addEventListener("click", (event) => {
@@ -1266,12 +1659,12 @@ function bindFilters() {
   });
 
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && donorModal.classList.contains("is-open")) {
-      closeDonorModal();
+    if (activeModal) {
+      trapFocus(event, activeModal);
     }
 
-    if (event.key === "Escape" && levelGuideModal.classList.contains("is-open")) {
-      closeLevelGuideModal();
+    if (event.key === "Escape" && donorModal.classList.contains("is-open")) {
+      closeDonorModal();
     }
 
     if (event.key === "Escape" && designationModal.classList.contains("is-open")) {
@@ -1376,7 +1769,7 @@ function renderErrorState() {
 
   donorResults.innerHTML = `
     <tr>
-      <td class="data-td" colspan="7">${escapeHtml(errorMessage)}</td>
+      <td class="data-td" colspan="4">${escapeHtml(errorMessage)}</td>
     </tr>
   `;
 
@@ -1395,13 +1788,39 @@ function applyDonorPayload(payload) {
   donorByGuid.clear();
   const rows = Array.isArray(payload.row) ? payload.row : [];
   donors = rows.map(normalizeDonor).filter((donor) => donor.latestGift);
-  selectedOverviewPeriod = getOverviewMonthValue(getMonthKey(new Date()));
+
+  const latestGiftDate = donors
+    .flatMap((donor) => donor.gifts)
+    .filter(isQualifyingGift)
+    .reduce((latest, gift) => {
+      if (!gift.date) {
+        return latest;
+      }
+
+      if (!latest || gift.date > latest) {
+        return gift.date;
+      }
+
+      return latest;
+    }, null);
+
+  if (shouldUseLocalSampleData() && latestGiftDate) {
+    selectedOverviewPeriod = getOverviewMonthValue(getMonthKey(latestGiftDate));
+
+    if (dateRangeFilter) {
+      dateRangeFilter.value = "all-time";
+    }
+  } else {
+    selectedOverviewPeriod = getOverviewMonthValue(getMonthKey(new Date()));
+  }
 }
 
 function renderLoadedDashboard() {
   renderOverviewMonthSelector();
   renderCurrentMonthLabels();
   renderCurrentMonthStats();
+  renderSummaryBar();
+  renderInsightCards();
   renderDesignationOverview();
   renderAlerts();
   renderDashboard();
@@ -1487,7 +1906,6 @@ async function init() {
   bindFilters();
   bindEmbeddedResizeEvents();
   renderLoadingState();
-  renderLevelGuide();
 
   try {
     if (isEmbeddedDataMode()) {

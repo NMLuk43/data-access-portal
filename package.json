@@ -7,6 +7,7 @@
     "build:css": "tailwindcss -i ./src/input.css -o ./dist/output.css --minify",
     "build:js": "node ./scripts/build-js.mjs",
     "build": "npm run build:css && npm run build:js",
+    "serve": "python3 -m http.server 8000",
     "watch:css": "tailwindcss -i ./src/input.css -o ./dist/output.css --watch",
     "watch:js": "node --watch ./scripts/build-js.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"

@@ -4,12 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Data Access Portal</title>
-    <!-- <link rel="stylesheet" href="./dist/output.css" /> -->
-    <link rel="stylesheet" href="https://nmluk43.github.io/data-access-portal/dist/output.css" />
-    <!-- <link rel="stylesheet" href="/adv/data-access-portal/styles-{{code[0].styles_version}}.css" /> -->
-    <!-- <script src="./dist/app.js" defer></script> -->
-    <script src="https://nmluk43.github.io/data-access-portal/dist/app.js" defer></script>
-    <!-- <script src="/adv/data-access-portal/script-{{code[0].script_version}}.js" defer></script> -->
+    <link rel="stylesheet" href="./dist/output.css" />
+    <script src="./dist/app.js" defer></script>
   </head>
   <body>
     <main class="page-shell dashboard-loading" id="dashboard-root">
@@ -24,6 +20,25 @@
           Loading donor data. This may take a second.
         </p>
       </header>
+
+      <section class="sticky-summary-bar" aria-label="Period summary">
+        <article class="summary-pill">
+          <p class="summary-pill-label">Selected Period</p>
+          <p class="summary-pill-value" id="summary-period-label">--</p>
+        </article>
+        <article class="summary-pill">
+          <p class="summary-pill-label">Total Raised</p>
+          <p class="summary-pill-value" id="summary-period-total">$0</p>
+        </article>
+        <article class="summary-pill">
+          <p class="summary-pill-label">Recurring Donors</p>
+          <p class="summary-pill-value" id="summary-recurring-donors">0</p>
+        </article>
+        <article class="summary-pill">
+          <p class="summary-pill-label">YoY Delta</p>
+          <p class="summary-pill-value" id="summary-yoy-delta">--</p>
+        </article>
+      </section>
 
       <section class="top-dashboard-row">
         <article class="month-overview-card">
@@ -149,10 +164,58 @@
         </aside>
       </section>
 
+      <section class="insights-grid">
+        <article class="insight-card">
+          <div class="insight-card-header">
+            <div>
+              <h3 class="chart-title">First-Time Vs Repeat Donors</h3>
+              <p class="section-subtitle" id="first-repeat-summary">Loading donor mix...</p>
+            </div>
+          </div>
+          <div class="comparison-stack" id="first-repeat-bars"></div>
+        </article>
+
+        <article class="insight-card">
+          <div class="insight-card-header">
+            <div>
+              <h3 class="chart-title">Year-Over-Year Snapshot</h3>
+              <p class="section-subtitle" id="yoy-summary">Loading yearly comparison...</p>
+            </div>
+          </div>
+          <div class="yoy-grid">
+            <article class="yoy-metric">
+              <p class="yoy-metric-label">Current Period</p>
+              <p class="yoy-metric-value" id="yoy-current-period">$0</p>
+            </article>
+            <article class="yoy-metric">
+              <p class="yoy-metric-label">Prior Year</p>
+              <p class="yoy-metric-value" id="yoy-prior-period">$0</p>
+            </article>
+            <article class="yoy-metric">
+              <p class="yoy-metric-label">Delta</p>
+              <p class="yoy-metric-value" id="yoy-delta-value">$0</p>
+            </article>
+            <article class="yoy-metric">
+              <p class="yoy-metric-label">Benchmark Pace</p>
+              <p class="yoy-metric-value" id="benchmark-delta-value">$0</p>
+            </article>
+          </div>
+        </article>
+
+        <article class="insight-card">
+          <div class="insight-card-header">
+            <div>
+              <h3 class="chart-title">Person Status Mix</h3>
+              <p class="section-subtitle" id="status-mix-summary">Loading status mix...</p>
+            </div>
+          </div>
+          <div class="status-mix-list" id="status-mix-list"></div>
+        </article>
+      </section>
+
       <section class="search-card">
         <div class="search-header">
           <h2 class="section-title">Donor Search</h2>
-          <button class="level-guide-button" id="level-guide-open" type="button">What do levels mean?</button>
         </div>
         <p class="section-subtitle">
           Default view shows donors from this month sorted by most recent gift date. Filters can be adjusted as needed.
@@ -162,7 +225,7 @@
           <input
             class="search-input"
             type="search"
-            placeholder="Search donors by name, status, address, or giving level"
+            placeholder="Search donors by name, status, address, or amount"
             value=""
           />
         </div>
@@ -214,6 +277,7 @@
             <span class="filter-chip" id="date-chip">Default: This Month</span>
             <span class="filter-chip" id="sort-chip">Default: Sort by Date</span>
             <span class="filter-chip" id="results-chip">0 Results</span>
+            <span class="filter-chip" id="fuzzy-chip">Fuzzy Search On</span>
           </div>
         </section>
 
@@ -222,12 +286,9 @@
             <thead class="data-head">
               <tr>
                 <th class="data-th">Donor</th>
-                <th class="data-th">Status</th>
-                <th class="data-th">Donor Status</th>
-                <th class="data-th">Fund</th>
-                <th class="data-th">Gift Date</th>
-                <th class="data-th">Gift Type</th>
-                <th class="data-th">Level</th>
+                <th class="data-th">Last Gift Date</th>
+                <th class="data-th">Last Gift Amt</th>
+                <th class="data-th">Person Status</th>
               </tr>
             </thead>
             <tbody class="data-body" id="donor-results"></tbody>
@@ -289,6 +350,42 @@
             </article>
           </div>
 
+          <div class="donor-modal-grid donor-modal-grid-secondary">
+            <article class="donor-modal-card">
+              <div class="modal-section-header">
+                <p class="donor-modal-label">Quick Actions</p>
+                <button class="modal-inline-action" id="modal-mark-thanked" type="button">Mark Thanked</button>
+              </div>
+              <div class="modal-action-list" id="modal-action-list"></div>
+            </article>
+
+            <article class="donor-modal-card">
+              <div class="modal-section-header">
+                <p class="donor-modal-label">Notes</p>
+                <span class="modal-mock-badge">Mockup</span>
+              </div>
+              <div class="modal-notes-shell">
+                <textarea class="modal-notes-textarea" id="modal-notes-textarea" placeholder="Draft a stewardship note, talking point, or next-step reminder..."></textarea>
+                <div class="modal-notes-actions">
+                  <button class="modal-inline-action" id="modal-save-note" type="button">Save Note</button>
+                  <span class="modal-notes-helper">Form wiring can be added later.</span>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="donor-modal-grid donor-modal-grid-secondary">
+            <article class="donor-modal-card">
+              <p class="donor-modal-label">Action History</p>
+              <div class="modal-activity-list" id="modal-activity-list"></div>
+            </article>
+
+            <article class="donor-modal-card">
+              <p class="donor-modal-label">Giving Timeline</p>
+              <div class="modal-timeline-list" id="modal-timeline-list"></div>
+            </article>
+          </div>
+
           <div class="donor-modal-history">
             <div class="donor-modal-history-header">
               <h3 class="donor-modal-history-title">Recent Giving History</h3>
@@ -301,7 +398,7 @@
                   <tr>
                     <th class="data-th">Date</th>
                     <th class="data-th">Fund</th>
-                    <th class="data-th">Level</th>
+                    <th class="data-th">Amount</th>
                     <th class="data-th">Type</th>
                     <th class="data-th">Method</th>
                   </tr>
@@ -310,28 +407,6 @@
               </table>
             </div>
           </div>
-        </div>
-      </section>
-
-      <section class="donor-modal" id="level-guide-modal" aria-hidden="true">
-        <div class="donor-modal-backdrop" data-level-guide-close="true"></div>
-        <div
-          class="donor-modal-panel donor-modal-panel-sm"
-          aria-labelledby="level-guide-title"
-          aria-modal="true"
-          role="dialog"
-        >
-          <div class="donor-modal-header">
-            <div>
-              <p class="donor-modal-eyebrow">Giving Level Guide</p>
-              <h2 class="donor-modal-title" id="level-guide-title">Giving Levels</h2>
-            </div>
-            <button class="donor-modal-close" id="level-guide-close" type="button" aria-label="Close giving level guide">
-              Close
-            </button>
-          </div>
-
-          <div class="level-guide-list" id="level-guide-list"></div>
         </div>
       </section>
 
