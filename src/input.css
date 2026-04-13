@@ -41,8 +41,16 @@
     @apply rounded-card border border-cardBorder bg-slate-50 px-4 py-3;
   }
 
+  .summary-pill-control {
+    @apply flex flex-col gap-2 border-primary bg-primary px-4 py-3 text-white shadow-card;
+  }
+
   .summary-pill-label {
     @apply text-[11px] font-semibold uppercase tracking-[0.16em] text-muted;
+  }
+
+  .summary-pill-control .summary-pill-label {
+    color: rgba(255, 255, 255, 0.78);
   }
 
   .summary-pill-value {
@@ -139,16 +147,20 @@
     @apply flex flex-col gap-3;
   }
 
-  .month-selector-wrap {
-    @apply flex max-w-56 flex-col gap-2;
-  }
-
-  .month-selector-label {
-    @apply text-xs font-semibold uppercase tracking-wide text-muted;
-  }
-
   .month-selector {
     @apply w-full rounded-card border border-borderSoft bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-primary;
+  }
+
+  .summary-pill-control .month-selector {
+    @apply border-white/20 bg-white/10 font-semibold text-white;
+  }
+
+  .summary-pill-control .month-selector:focus {
+    @apply border-white bg-white/20;
+  }
+
+  .summary-pill-control .month-selector option {
+    color: #0f172a;
   }
 
   .overview-hero {
@@ -954,10 +966,6 @@
       @apply grid-cols-2;
     }
 
-    .overview-header {
-      @apply flex-row items-end justify-between;
-    }
-
     .designation-header {
       @apply flex-row items-start justify-between;
     }
@@ -967,7 +975,7 @@
     }
 
     .sticky-summary-bar {
-      @apply grid-cols-4;
+      grid-template-columns: minmax(13rem, 1.2fr) repeat(3, minmax(0, 1fr));
     }
 
     .auth-page-grid {

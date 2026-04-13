@@ -16,7 +16,6 @@ const monthSelector = document.querySelector("#month-selector");
 const summaryPeriodLabel = document.querySelector("#summary-period-label");
 const summaryPeriodTotal = document.querySelector("#summary-period-total");
 const summaryRecurringDonors = document.querySelector("#summary-recurring-donors");
-const summaryYoyDelta = document.querySelector("#summary-yoy-delta");
 
 const monthTotal = document.querySelector("#month-total");
 const monthTotalDetail = document.querySelector("#month-total-detail");
@@ -973,12 +972,10 @@ function addStewardshipHistory(personGuid, label) {
 function renderSummaryBar() {
   const periodValue = selectedOverviewPeriod || getOverviewMonthValue(getMonthKey(new Date()));
   const stats = getSelectedOverviewMonthStats();
-  const yoy = getYearOverYearStats(periodValue);
 
   summaryPeriodLabel.textContent = formatOverviewPeriodLabel(periodValue);
   summaryPeriodTotal.textContent = formatCurrency(stats.total);
   summaryRecurringDonors.textContent = String(getRecurringDonorCount(periodValue));
-  summaryYoyDelta.textContent = yoy.percentDelta === null ? formatDeltaCurrency(yoy.delta) : `${formatDeltaCurrency(yoy.delta)} (${yoy.percentDelta > 0 ? "+" : ""}${yoy.percentDelta}%)`;
 }
 
 function renderInsightCards() {

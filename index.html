@@ -22,6 +22,12 @@
       </header>
 
       <section class="sticky-summary-bar" aria-label="Period summary">
+        <label class="summary-pill summary-pill-control">
+          <span class="summary-pill-label">View Period</span>
+          <select class="month-selector" id="month-selector">
+            <option>Loading periods...</option>
+          </select>
+        </label>
         <article class="summary-pill">
           <p class="summary-pill-label">Selected Period</p>
           <p class="summary-pill-value" id="summary-period-label">--</p>
@@ -34,22 +40,12 @@
           <p class="summary-pill-label">Recurring Donors</p>
           <p class="summary-pill-value" id="summary-recurring-donors">0</p>
         </article>
-        <article class="summary-pill">
-          <p class="summary-pill-label">YoY Delta</p>
-          <p class="summary-pill-value" id="summary-yoy-delta">--</p>
-        </article>
       </section>
 
       <section class="top-dashboard-row">
         <article class="month-overview-card">
           <div class="overview-header">
             <h2 class="section-title" id="month-overview-title">Month Giving Overview</h2>
-            <label class="month-selector-wrap">
-              <span class="month-selector-label">View Period</span>
-              <select class="month-selector" id="month-selector">
-                <option>Loading periods...</option>
-              </select>
-            </label>
           </div>
 
           <section class="overview-hero">
