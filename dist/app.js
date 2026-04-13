@@ -95,16 +95,6 @@ let lastLoadErrorMessage = "";
 let activeModal = null;
 const stewardshipState = new Map();
 
-function isEmbeddedDataMode() {
-  const pageUrl = new URL(window.location.href);
-  return pageUrl.searchParams.get("embedded") === "1";
-}
-
-function getEmbeddedSourceOrigin() {
-  const pageUrl = new URL(window.location.href);
-  return pageUrl.searchParams.get("sourceOrigin") || "";
-}
-
 function shouldUseLocalSampleData() {
   const pageUrl = new URL(window.location.href);
   const hostname = pageUrl.hostname.toLowerCase();
@@ -132,27 +122,6 @@ function shouldUseLocalSampleData() {
   }
 
   return false;
-}
-
-function postEmbedHeight() {
-  if (!isEmbeddedDataMode() || !window.parent || window.parent === window) {
-    return;
-  }
-
-  const targetOrigin = getEmbeddedSourceOrigin() || "*";
-  const height = Math.max(
-    document.documentElement ? document.documentElement.scrollHeight : 0,
-    document.body ? document.body.scrollHeight : 0,
-    dashboardRoot ? dashboardRoot.scrollHeight : 0
-  );
-
-  window.parent.postMessage(
-    {
-      type: "dashboard-height",
-      height
-    },
-    targetOrigin
-  );
 }
 
 function getFetchUrl() {
@@ -1825,7 +1794,6 @@ function renderLoadedDashboard() {
   renderAlerts();
   renderDashboard();
   dashboardRoot.classList.remove("dashboard-loading");
-  postEmbedHeight();
 }
 
 async function loadDonors() {
@@ -1856,65 +1824,12 @@ async function loadDonors() {
   applyDonorPayload(payload);
 }
 
-function waitForEmbeddedPayload() {
-  return new Promise((resolve, reject) => {
-    const allowedOrigin = getEmbeddedSourceOrigin();
-    const timeoutId = window.setTimeout(() => {
-      window.removeEventListener("message", handleMessage);
-      reject(new Error("Timed out waiting for donor data from the parent page."));
-    }, 90000);
-
-    function handleMessage(event) {
-      if (allowedOrigin && event.origin !== allowedOrigin) {
-        return;
-      }
-
-      if (!event.data || event.data.type !== "donor-data") {
-        return;
-      }
-
-      window.clearTimeout(timeoutId);
-      window.removeEventListener("message", handleMessage);
-      resolve(event.data.payload);
-    }
-
-    window.addEventListener("message", handleMessage);
-
-    if (window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: "donor-data-ready" }, "*");
-    }
-  });
-}
-
-function bindEmbeddedResizeEvents() {
-  if (!isEmbeddedDataMode()) {
-    return;
-  }
-
-  window.addEventListener("load", postEmbedHeight);
-  window.addEventListener("resize", postEmbedHeight);
-
-  if (typeof ResizeObserver === "function" && dashboardRoot) {
-    const resizeObserver = new ResizeObserver(() => {
-      postEmbedHeight();
-    });
-    resizeObserver.observe(dashboardRoot);
-  }
-}
-
 async function init() {
   bindFilters();
-  bindEmbeddedResizeEvents();
   renderLoadingState();
 
   try {
-    if (isEmbeddedDataMode()) {
-      const payload = await waitForEmbeddedPayload();
-      applyDonorPayload(payload);
-    } else {
-      await loadDonors();
-    }
-
+    await loadDonors();
     renderLoadedDashboard();
   } catch (error) {
     lastLoadErrorMessage = error instanceof Error ? error.message : String(error);
