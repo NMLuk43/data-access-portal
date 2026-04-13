@@ -123,6 +123,10 @@ function shouldUseLocalSampleData() {
 }
 
 function getFetchUrl() {
+  if (window.__PORTAL_DATA_URL__) {
+    return new URL(window.__PORTAL_DATA_URL__, window.location.href).toString();
+  }
+
   const pageUrl = new URL(window.location.href);
   const configuredDataUrl = pageUrl.searchParams.get("dataUrl");
 
