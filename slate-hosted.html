@@ -4,38 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Data Access Portal</title>
-    <script>
-      (function loadPortalAssets() {
-        const isLocalHost =
-          window.location.protocol === "file:" ||
-          window.location.hostname === "localhost" ||
-          window.location.hostname === "127.0.0.1" ||
-          window.location.hostname === "[::1]" ||
-          window.location.hostname.endsWith(".local") ||
-          window.location.hostname.endsWith(".localhost") ||
-          window.location.hostname.startsWith("192.168.") ||
-          window.location.hostname.startsWith("10.") ||
-          window.location.hostname.startsWith("172.");
-
-        if (isLocalHost) {
-          window.__PORTAL_DATA_URL__ = "./sample-data.json";
-        }
-
-        const assetBase = isLocalHost
-          ? "./dist"
-          : "https://nmluk43.github.io/data-access-portal/dist";
-
-        const stylesheet = document.createElement("link");
-        stylesheet.rel = "stylesheet";
-        stylesheet.href = `${assetBase}/output.css`;
-        document.head.appendChild(stylesheet);
-
-        const script = document.createElement("script");
-        script.src = `${assetBase}/app.js`;
-        script.defer = true;
-        document.head.appendChild(script);
-      })();
-    </script>
+    <link rel="stylesheet" href="/adv/data-access-portal/styles-{{code[0].styles_version}}.css" />
+    <script src="/adv/data-access-portal/script-{{code[0].script_version}}.js" defer></script>
   </head>
   <body>
     <main class="page-shell dashboard-loading" id="dashboard-root">

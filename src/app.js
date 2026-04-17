@@ -144,6 +144,77 @@ function getFetchUrl() {
   return url.toString();
 }
 
+function getAnonymousFetchUrl() {
+  if (window.__PORTAL_ANONYMOUS_DATA_URL__) {
+    return new URL(window.__PORTAL_ANONYMOUS_DATA_URL__, window.location.href).toString();
+  }
+
+  if (shouldUseLocalSampleData()) {
+    return "";
+  }
+
+  const pageUrl = new URL(window.location.href);
+  const configuredAnonymousUrl = pageUrl.searchParams.get("anonymousDataUrl");
+
+  if (configuredAnonymousUrl) {
+    return new URL(configuredAnonymousUrl, pageUrl.href).toString();
+  }
+
+  const url = new URL(window.location.href);
+  url.search = "";
+  url.searchParams.set("cmd", "fetch-anonymous");
+  return url.toString();
+}
+
+function getFetchOptions(fetchUrl) {
+  const fetchOrigin = new URL(fetchUrl, window.location.href).origin;
+  const currentOrigin = window.location.origin;
+  const credentialsMode = fetchOrigin === currentOrigin ? "same-origin" : "include";
+
+  return { credentials: credentialsMode };
+}
+
+function wait(milliseconds) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, milliseconds);
+  });
+}
+
+async function fetchJsonWithRetries(fetchUrl, label, attempts = 3) {
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      const response = await fetch(fetchUrl, getFetchOptions(fetchUrl));
+
+      if (!response.ok) {
+        throw new Error(`${label} request failed with status ${response.status}`);
+      }
+
+      const rawText = await response.text();
+
+      if (!rawText.trim()) {
+        throw new Error(`${label} request returned an empty response`);
+      }
+
+      try {
+        return JSON.parse(rawText);
+      } catch (_error) {
+        const bodyPreview = rawText.slice(0, 80).trim();
+        throw new Error(`${label} data URL returned non-JSON content: ${fetchUrl} (${bodyPreview || "empty response"})`);
+      }
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+
+      if (attempt < attempts) {
+        await wait(350 * attempt);
+      }
+    }
+  }
+
+  throw lastError || new Error(`${label} request failed`);
+}
+
 function parseAmount(value) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -472,6 +543,12 @@ function getPrimaryPersonInfo(row) {
 }
 
 function getPrimaryAddress(row, personInfo) {
+  const cofoAddress = parseArrayLikeValue(personInfo.cofo_address);
+
+  if (cofoAddress.length > 0) {
+    return cofoAddress[0] || {};
+  }
+
   const nestedAddress = parseArrayLikeValue(personInfo.address);
 
   if (nestedAddress.length > 0) {
@@ -507,7 +584,10 @@ function normalizeDonor(row) {
     "Company Name",
     "company_name"
   ]);
-  const status = getRecordValue(personInfo, ["Person Status", "person_status"]) || row.person_status || "Unknown";
+  const status =
+    getRecordValue(personInfo, ["Person Status", "person_status"]) ||
+    row.person_status ||
+    (organizationName ? "Company/Foundation" : "Unknown");
   const donorStatus =
     getRecordValue(personInfo, ["Person Donor Status", "donor_status", "person_donor_status"]) ||
     row.donor_status ||
@@ -547,26 +627,89 @@ function normalizeDonor(row) {
   return donor;
 }
 
+function normalizeAnonymousDonor(row, index) {
+  const giftsSource = Array.isArray(row.anonymous_gifts)
+    ? row.anonymous_gifts
+    : Array.isArray(row.giving_history)
+      ? row.giving_history
+      : Array.isArray(row.gifts)
+        ? row.gifts
+        : [row];
+  const gifts = giftsSource.map((gift) => normalizeGift({
+    ...gift,
+    "Gifts Anonymous": true
+  }));
+  const latestGift = getMostRecentGift(gifts);
+
+  if (!latestGift) {
+    return null;
+  }
+
+  const personGuid = `anonymous::${latestGift.dateRaw || "unknown-date"}::${latestGift.fundName || "unknown-fund"}::${latestGift.amount}::${index}`;
+  const donor = {
+    personGuid,
+    preferredName: "",
+    lastName: "",
+    fullName: "Anonymous Donor",
+    status: "Anonymous",
+    donorStatus: "Private",
+    address: "Identity withheld",
+    contactRestrictions: [],
+    gifts,
+    latestGift
+  };
+
+  donorByGuid.set(personGuid, donor);
+  return donor;
+}
+
 function getAvailableOverviewPeriods() {
+  const currentYear = new Date().getFullYear();
+  const allowedYears = new Set([
+    String(currentYear),
+    String(currentYear - 1),
+    String(currentYear - 2)
+  ]);
   const monthKeys = new Set();
   const yearKeys = new Set();
 
   for (const donor of donors) {
     for (const gift of donor.gifts) {
       if (isQualifyingGift(gift) && gift.date) {
+        const yearKey = getYearKey(gift.date);
+
+        if (!allowedYears.has(yearKey)) {
+          continue;
+        }
+
         monthKeys.add(getMonthKey(gift.date));
-        yearKeys.add(getYearKey(gift.date));
+        yearKeys.add(yearKey);
       }
     }
   }
 
-  monthKeys.add(getMonthKey(new Date()));
-  yearKeys.add(getYearKey(new Date()));
+  const currentMonthKey = getMonthKey(new Date());
 
   return {
-    months: [...monthKeys].sort((left, right) => right.localeCompare(left)),
+    months: [...monthKeys]
+      .filter((monthKey) => monthKey <= currentMonthKey)
+      .sort((left, right) => right.localeCompare(left)),
     years: [...yearKeys].sort((left, right) => right.localeCompare(left))
   };
+}
+
+function getDefaultOverviewPeriod() {
+  const periods = getAvailableOverviewPeriods();
+
+  if (periods.months.length > 0) {
+    return getOverviewMonthValue(periods.months[0]);
+  }
+
+  if (periods.years.length > 0) {
+    return getOverviewYearValue(periods.years[0]);
+  }
+
+  return getOverviewYearValue(String(new Date().getFullYear() - 1));
 }
 
 function isSameMonth(date, referenceDate) {
@@ -692,9 +835,6 @@ function renderDonorRows(items) {
       const donorName = isAnonymousDisplay ? "Anonymous Donor" : donor.fullName;
       const donorSubtext = isAnonymousDisplay ? "Gift marked anonymous" : donor.address;
       const donorSegment = isAnonymousDisplay ? "Private" : donor.status;
-      const donorStatusBadge = isAnonymousDisplay ? "--" : getDonorStatusBadgeMarkup(donor.donorStatus);
-      const fundName = donor.latestMatchingGift.fundName || "--";
-      const anonymousBadge = isAnonymousDisplay ? `<div class="donor-inline-flags"><span class="alert-badge alert-badge-anonymous">Anonymous</span></div>` : "";
       const rowAttributes = isAnonymousDisplay
         ? `class="donor-row donor-row-disabled"`
         : `class="donor-row" data-person-guid="${escapeHtml(donor.personGuid)}"`;
@@ -703,7 +843,6 @@ function renderDonorRows(items) {
         <tr ${rowAttributes}>
           <td class="data-td">
             <div class="donor-name">${escapeHtml(donorName)}</div>
-            ${anonymousBadge}
             ${!isAnonymousDisplay && donor.contactRestrictions.length > 0 ? `<div class="donor-inline-flags">${getRestrictionBadgeMarkup()}</div>` : ""}
             <div class="donor-subtext">${escapeHtml(donorSubtext)}</div>
           </td>
@@ -1243,7 +1382,7 @@ function renderOverviewMonthSelector() {
   const periods = getAvailableOverviewPeriods();
 
   if (!selectedOverviewPeriod) {
-    selectedOverviewPeriod = getOverviewMonthValue(getMonthKey(new Date()));
+    selectedOverviewPeriod = getDefaultOverviewPeriod();
   }
 
   const monthOptions = periods.months
@@ -1753,10 +1892,14 @@ function renderErrorState() {
   `;
 }
 
-function applyDonorPayload(payload) {
+function applyDonorPayload(payload, anonymousPayload = null) {
   donorByGuid.clear();
   const rows = Array.isArray(payload.row) ? payload.row : [];
-  donors = rows.map(normalizeDonor).filter((donor) => donor.latestGift);
+  const anonymousRows = Array.isArray(anonymousPayload?.row) ? anonymousPayload.row : [];
+  donors = [
+    ...rows.map(normalizeDonor),
+    ...anonymousRows.map((row, index) => normalizeAnonymousDonor(row, index))
+  ].filter((donor) => donor && donor.latestGift);
 
   const latestGiftDate = donors
     .flatMap((donor) => donor.gifts)
@@ -1774,13 +1917,22 @@ function applyDonorPayload(payload) {
     }, null);
 
   if (shouldUseLocalSampleData() && latestGiftDate) {
-    selectedOverviewPeriod = getOverviewMonthValue(getMonthKey(latestGiftDate));
+    const latestGiftYear = getYearKey(latestGiftDate);
+    const allowedYears = new Set([
+      String(new Date().getFullYear()),
+      String(new Date().getFullYear() - 1),
+      String(new Date().getFullYear() - 2)
+    ]);
+
+    selectedOverviewPeriod = allowedYears.has(latestGiftYear)
+      ? getOverviewMonthValue(getMonthKey(latestGiftDate))
+      : getDefaultOverviewPeriod();
 
     if (dateRangeFilter) {
       dateRangeFilter.value = "all-time";
     }
   } else {
-    selectedOverviewPeriod = getOverviewMonthValue(getMonthKey(new Date()));
+    selectedOverviewPeriod = getDefaultOverviewPeriod();
   }
 }
 
@@ -1801,27 +1953,16 @@ async function loadDonors() {
   donorByGuid.clear();
   lastLoadErrorMessage = "";
   const fetchUrl = getFetchUrl();
-  const fetchOrigin = new URL(fetchUrl, window.location.href).origin;
-  const currentOrigin = window.location.origin;
-  const credentialsMode = fetchOrigin === currentOrigin ? "same-origin" : "include";
+  const anonymousFetchUrl = getAnonymousFetchUrl();
+  const requests = [fetchJsonWithRetries(fetchUrl, "Donor", 3)];
 
-  const response = await fetch(fetchUrl, {
-    credentials: credentialsMode
-  });
-
-  if (!response.ok) {
-    throw new Error(`Request failed with status ${response.status}`);
+  if (anonymousFetchUrl) {
+    requests.push(fetchJsonWithRetries(anonymousFetchUrl, "Anonymous", 3));
   }
 
-  const contentType = response.headers.get("content-type") || "";
+  const [payload, anonymousPayload = null] = await Promise.all(requests);
 
-  if (!contentType.toLowerCase().includes("application/json")) {
-    const bodyPreview = (await response.text()).slice(0, 80).trim();
-    throw new Error(`Data URL returned HTML or non-JSON content: ${fetchUrl} (${bodyPreview || "empty response"})`);
-  }
-
-  const payload = await response.json();
-  applyDonorPayload(payload);
+  applyDonorPayload(payload, anonymousPayload);
 }
 
 async function init() {
